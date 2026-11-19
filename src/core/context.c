@@ -7,6 +7,7 @@
 struct qvm_context {
     qvm_config      config;
     qvm_type_table  types;
+    qvm_state       state;
 };
 
 qvm_context *qvm_context_create(const qvm_config *cfg, qvm_error *err) {
@@ -19,25 +20,21 @@ qvm_context *qvm_context_create(const qvm_config *cfg, qvm_error *err) {
     ctx->config = cfg ? *cfg : qvm_config_default();
     ctx->types.entries = NULL;
     ctx->types.count   = 0;
+    ctx->state         = QVM_STATE_CREATED;
     return ctx;
 }
 
-void qvm_context_destroy(qvm_context *ctx) {
-    free(ctx);
+void qvm_context_destroy(qvm_context *ctx) { free(ctx); }
+
+const qvm_config *qvm_context_config(const qvm_context *ctx) { return ctx ? &ctx->config : NULL; }
+const qvm_limits *qvm_context_limits(const qvm_context *ctx) { return ctx ? &ctx->config.limits : NULL; }
+qvm_mode          qvm_context_mode  (const qvm_context *ctx) { return ctx ?  ctx->config.mode   : QVM_MODE_SAFE; }
+const qvm_type_table *qvm_context_types(const qvm_context *ctx) { return ctx ? &ctx->types : NULL; }
+
+qvm_state qvm_context_state(const qvm_context *ctx) {
+    return ctx ? ctx->state : QVM_STATE_FAILED;
 }
 
-const qvm_config *qvm_context_config(const qvm_context *ctx) {
-    return ctx ? &ctx->config : NULL;
-}
-
-const qvm_limits *qvm_context_limits(const qvm_context *ctx) {
-    return ctx ? &ctx->config.limits : NULL;
-}
-
-qvm_mode qvm_context_mode(const qvm_context *ctx) {
-    return ctx ? ctx->config.mode : QVM_MODE_SAFE;
-}
-
-const qvm_type_table *qvm_context_types(const qvm_context *ctx) {
-    return ctx ? &ctx->types : NULL;
+void qvm_context_set_state(qvm_context *ctx, qvm_state s) {
+    if (ctx) ctx->state = s;
 }

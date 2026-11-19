@@ -4,8 +4,10 @@
 #include "qvm/config.h"
 #include "qvm/context.h"
 #include "qvm/error.h"
+#include "qvm/frames.h"
 #include "qvm/lifecycle.h"
 #include "qvm/limits.h"
+#include "qvm/registers.h"
 #include "qvm/types.h"
 #include "qvm/value.h"
 

@@ -13,6 +13,8 @@ add_library(qvm_core STATIC
     src/core/context.c
     src/core/lifecycle.c
     src/core/version.c
+    src/frames/frames.c
+    src/registers/registers.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
