@@ -10,6 +10,9 @@ add_library(qvm_core STATIC
     src/core/error.c
     src/core/limits.c
     src/core/config.c
+    src/core/context.c
+    src/core/lifecycle.c
+    src/core/version.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
