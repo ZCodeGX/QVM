@@ -19,3 +19,17 @@ add_library(qvm_core STATIC
 
 target_include_directories(qvm_core PUBLIC include)
 target_compile_options(qvm_core PRIVATE -Wall -Wextra -Wpedantic)
+
+enable_testing()
+
+add_executable(test_lifecycle tests/core/test_lifecycle.c)
+target_link_libraries(test_lifecycle qvm_core)
+add_test(NAME lifecycle COMMAND test_lifecycle)
+
+add_executable(test_frames tests/frames/test_frames.c)
+target_link_libraries(test_frames qvm_core)
+add_test(NAME frames COMMAND test_frames)
+
+add_executable(test_registers tests/registers/test_registers.c)
+target_link_libraries(test_registers qvm_core)
+add_test(NAME registers COMMAND test_registers)

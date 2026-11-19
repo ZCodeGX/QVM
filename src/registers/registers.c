@@ -24,6 +24,9 @@ qvm_error qvm_register_read_pair(const qvm_frame *frame, uint32_t index, uint64_
     if (!frame || !lo || !hi) return QVM_ERR_INVALID_ARGUMENT;
     if (index % 2 != 0) return QVM_ERR_INVALID_ARGUMENT;
     if (index + 1 >= qvm_frame_register_count(frame)) return QVM_ERR_INVALID_ARGUMENT;
+    const qvm_type_id_t *types = qvm_frame_register_types(frame);
+    if (types[index] != QVM_TYPE_I128 && types[index] != QVM_TYPE_U128) return QVM_ERR_TYPE_MISMATCH;
+    if (types[index] != types[index + 1]) return QVM_ERR_TYPE_MISMATCH;
     const qvm_value *regs = qvm_frame_registers_const(frame);
     *lo = regs[index].payload;
     *hi = regs[index + 1].payload;
@@ -34,6 +37,9 @@ qvm_error qvm_register_write_pair(qvm_frame *frame, uint32_t index, uint64_t lo,
     if (!frame) return QVM_ERR_INVALID_ARGUMENT;
     if (index % 2 != 0) return QVM_ERR_INVALID_ARGUMENT;
     if (index + 1 >= qvm_frame_register_count(frame)) return QVM_ERR_INVALID_ARGUMENT;
+    const qvm_type_id_t *types = qvm_frame_register_types(frame);
+    if (types[index] != QVM_TYPE_I128 && types[index] != QVM_TYPE_U128) return QVM_ERR_TYPE_MISMATCH;
+    if (types[index] != types[index + 1]) return QVM_ERR_TYPE_MISMATCH;
     qvm_value *regs = qvm_frame_registers(frame);
     regs[index].payload     = lo;
     regs[index + 1].payload = hi;
