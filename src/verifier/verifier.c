@@ -9,6 +9,7 @@ static uint32_t insn_size(const qvm_instruction *ins) {
         case QVM_OP_MOV: case QVM_OP_CAST:
         case QVM_OP_ARITH_NEG: case QVM_OP_LOGIC_NOT:
         case QVM_OP_RETURN:
+        case QVM_OP_STR_LEN:
             return 5;
         case QVM_OP_ARITH_ADD: case QVM_OP_ARITH_SUB:
         case QVM_OP_ARITH_MUL: case QVM_OP_ARITH_DIV:
@@ -17,12 +18,17 @@ static uint32_t insn_size(const qvm_instruction *ins) {
         case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
         case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
         case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
+        case QVM_OP_STR_CONCAT:
+        case QVM_OP_STR_CHAR_AT:
+        case QVM_OP_STR_SLICE:
+        case QVM_OP_STR_CMP:
             return 6;
         case QVM_OP_LOAD_CONST: case QVM_OP_JMP:
             return 8;
         case QVM_OP_JMP_IF: case QVM_OP_JMP_IF_NOT:
             return 9;
         case QVM_OP_CALL:
+        case QVM_OP_CALL_NATIVE:
             return 9u + ins->arg_count;
         default:
             return 4;
