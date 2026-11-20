@@ -2,7 +2,6 @@
 #define QVM_INSTRUCTION_H
 
 #include <stdint.h>
-
 #include "qvm/error.h"
 #include "qvm/frames.h"
 #include "qvm/types.h"
@@ -34,15 +33,17 @@ typedef struct qvm_instruction {
     uint32_t        src1;
     uint32_t        src2;
     uint32_t        imm32;
-    const uint32_t *args;
+    uint32_t       *args;
     uint16_t        arg_count;
 } qvm_instruction;
 
 const char   *qvm_opcode_name(qvm_opcode op);
 qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins);
-qvm_error     qvm_instruction_validate   (const qvm_instruction *ins, const qvm_frame *frame);
+qvm_error     qvm_instruction_validate(const qvm_instruction *ins, const qvm_frame *frame);
 
-qvm_error     qvm_instruction_decode (const uint8_t *bytes, uint32_t len, qvm_instruction *out);
+qvm_error     qvm_instruction_decode(const uint8_t *bytes, uint32_t len, qvm_instruction *out);
+void          qvm_instruction_free(qvm_instruction *ins);
+
 qvm_error     qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame);
 
 #ifdef __cplusplus

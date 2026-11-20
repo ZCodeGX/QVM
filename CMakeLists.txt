@@ -40,3 +40,7 @@ add_test(NAME registers COMMAND test_registers)
 add_executable(test_instruction tests/instruction/test_instruction.c)
 target_link_libraries(test_instruction qvm_core)
 add_test(NAME instruction COMMAND test_instruction)
+
+add_executable(test_decode tests/instruction/test_decode.c)
+target_link_libraries(test_decode qvm_core)
+add_test(NAME decode COMMAND test_decode)
