@@ -1,6 +1,7 @@
 #include <string.h>
 #include "qvm/instruction.h"
 #include "qvm/registers.h"
+#include "qvm/string.h"
 
 static qvm_error exec_arith(const qvm_instruction *ins, qvm_frame *frame) {
     qvm_value a, b, result = {0};
@@ -176,6 +177,104 @@ static qvm_error exec_cast(const qvm_instruction *ins, qvm_frame *frame) {
     return qvm_register_write(frame, ins->dst, dst);
 }
 
+static qvm_string *read_string(qvm_frame *frame, uint32_t reg, qvm_error *err) {
+    uint64_t lo, hi;
+    *err = qvm_register_read_pair(frame, reg, &lo, &hi);
+    if (*err != QVM_OK) return NULL;
+    qvm_string *s;
+    memcpy(&s, &lo, sizeof(s));
+    return s;
+}
+
+static qvm_error write_string(qvm_frame *frame, uint32_t reg, qvm_string *s) {
+    uint64_t lo = 0;
+    memcpy(&lo, &s, sizeof(s));
+    return qvm_register_write_pair(frame, reg, lo, 0);
+}
+
+static qvm_error exec_str_concat(const qvm_instruction *ins, qvm_frame *frame) {
+    qvm_error err;
+    qvm_string *a = read_string(frame, ins->src1, &err);
+    if (err != QVM_OK) return err;
+    qvm_string *b = read_string(frame, ins->src2, &err);
+    if (err != QVM_OK) return err;
+    if (!a || !b) return QVM_ERR_INVALID_ARGUMENT;
+
+    qvm_string *result = qvm_string_concat(a, b, &err);
+    if (!result) return err;
+
+    return write_string(frame, ins->dst, result);
+}
+
+static qvm_error exec_str_len(const qvm_instruction *ins, qvm_frame *frame) {
+    qvm_error err;
+    qvm_string *s = read_string(frame, ins->src1, &err);
+    if (err != QVM_OK) return err;
+    if (!s) return QVM_ERR_INVALID_ARGUMENT;
+
+    qvm_value v = {0};
+    v.type_id = QVM_TYPE_U32;
+    v.payload = qvm_string_len(s);
+    return qvm_register_write(frame, ins->dst, v);
+}
+
+static qvm_error exec_str_char_at(const qvm_instruction *ins, qvm_frame *frame) {
+    qvm_error err;
+    qvm_string *s = read_string(frame, ins->src1, &err);
+    if (err != QVM_OK) return err;
+    if (!s) return QVM_ERR_INVALID_ARGUMENT;
+
+    qvm_value idx_val;
+    err = qvm_register_read(frame, ins->src2, &idx_val);
+    if (err != QVM_OK) return err;
+
+    int32_t ch = qvm_string_char_at(s, (uint32_t)idx_val.payload, &err);
+    if (err != QVM_OK) return err;
+
+    qvm_value v = {0};
+    v.type_id = QVM_TYPE_CHAR;
+    v.payload = (uint64_t)ch;
+    return qvm_register_write(frame, ins->dst, v);
+}
+
+static qvm_error exec_str_slice(const qvm_instruction *ins, qvm_frame *frame) {
+    qvm_error err;
+    qvm_string *s = read_string(frame, ins->src1, &err);
+    if (err != QVM_OK) return err;
+    if (!s) return QVM_ERR_INVALID_ARGUMENT;
+
+    qvm_value start_val;
+    err = qvm_register_read(frame, ins->src2, &start_val);
+    if (err != QVM_OK) return err;
+
+    qvm_string *result = qvm_string_slice(s, (uint32_t)start_val.payload, s->len, &err);
+    if (!result) return err;
+
+    return write_string(frame, ins->dst, result);
+}
+
+static qvm_error exec_str_cmp(const qvm_instruction *ins, qvm_frame *frame) {
+    qvm_error err;
+    qvm_string *a = read_string(frame, ins->src1, &err);
+    if (err != QVM_OK) return err;
+    qvm_string *b = read_string(frame, ins->src2, &err);
+    if (err != QVM_OK) return err;
+
+    qvm_value v = {0};
+    v.type_id = QVM_TYPE_BOOL;
+
+    int cmp;
+    switch (ins->opcode) {
+        case QVM_OP_STR_CMP:
+            cmp = qvm_string_compare(a, b);
+            v.payload = (cmp == 0) ? 1 : 0;
+            break;
+        default:
+            return QVM_ERR_INTERNAL;
+    }
+    return qvm_register_write(frame, ins->dst, v);
+}
+
 qvm_error qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame) {
     if (!ins || !frame) return QVM_ERR_INVALID_ARGUMENT;
     switch (ins->opcode) {
@@ -225,6 +324,16 @@ qvm_error qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame) 
             return exec_logic(ins, frame);
         case QVM_OP_CAST:
             return exec_cast(ins, frame);
+        case QVM_OP_STR_CONCAT:
+            return exec_str_concat(ins, frame);
+        case QVM_OP_STR_LEN:
+            return exec_str_len(ins, frame);
+        case QVM_OP_STR_CHAR_AT:
+            return exec_str_char_at(ins, frame);
+        case QVM_OP_STR_SLICE:
+            return exec_str_slice(ins, frame);
+        case QVM_OP_STR_CMP:
+            return exec_str_cmp(ins, frame);
         case QVM_OP_LOAD_CONST:
         case QVM_OP_JMP: case QVM_OP_JMP_IF: case QVM_OP_JMP_IF_NOT:
         case QVM_OP_CALL: case QVM_OP_RETURN: case QVM_OP_RETURN_VOID:

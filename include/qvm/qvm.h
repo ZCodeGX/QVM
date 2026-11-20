@@ -12,6 +12,7 @@
 #include "qvm/qcb.h"
 #include "qvm/registers.h"
 #include "qvm/runtime.h"
+#include "qvm/string.h"
 #include "qvm/type_table.h"
 #include "qvm/types.h"
 #include "qvm/value.h"

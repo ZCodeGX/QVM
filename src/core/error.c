@@ -17,9 +17,10 @@ const char *qvm_error_name(qvm_error err) {
         case QVM_ERR_INVALID_BOOL:        return "QVM_ERR_INVALID_BOOL";
         case QVM_ERR_MODULE_INCOMPATIBLE: return "QVM_ERR_MODULE_INCOMPATIBLE";
         case QVM_ERR_IO:                  return "QVM_ERR_IO";
+        case QVM_ERR_OUT_OF_BOUNDS:       return "QVM_ERR_OUT_OF_BOUNDS";
         case QVM_ERR_INTERNAL:            return "QVM_ERR_INTERNAL";
-        default:                          return "QVM_ERR_UNKNOWN";
     }
+    return "QVM_ERR_UNKNOWN";
 }
 
 const char *qvm_error_message(qvm_error err) {
@@ -33,13 +34,14 @@ const char *qvm_error_message(qvm_error err) {
         case QVM_ERR_STACK_OVERFLOW:      return "stack overflow";
         case QVM_ERR_CALL_DEPTH_EXCEEDED: return "call depth exceeded";
         case QVM_ERR_LIMIT_EXCEEDED:      return "limit exceeded";
-        case QVM_ERR_LOW_LEVEL_DISABLED:  return "low-level mode disabled";
+        case QVM_ERR_LOW_LEVEL_DISABLED:  return "low-level operations disabled";
         case QVM_ERR_NULL_REFERENCE:      return "null reference";
-        case QVM_ERR_INVALID_CHAR:        return "invalid char value";
-        case QVM_ERR_INVALID_BOOL:        return "invalid bool value";
-        case QVM_ERR_MODULE_INCOMPATIBLE: return "incompatible module representation";
+        case QVM_ERR_INVALID_CHAR:        return "invalid character";
+        case QVM_ERR_INVALID_BOOL:        return "invalid boolean value";
+        case QVM_ERR_MODULE_INCOMPATIBLE: return "module incompatible";
         case QVM_ERR_IO:                  return "I/O error";
+        case QVM_ERR_OUT_OF_BOUNDS:       return "out of bounds";
         case QVM_ERR_INTERNAL:            return "internal error";
-        default:                          return "unknown error";
     }
+    return "unknown error";
 }

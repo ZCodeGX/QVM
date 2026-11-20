@@ -23,7 +23,9 @@ typedef enum qvm_opcode {
     QVM_OP_JMP, QVM_OP_JMP_IF, QVM_OP_JMP_IF_NOT,
     QVM_OP_CALL,
     QVM_OP_RETURN, QVM_OP_RETURN_VOID,
-    QVM_OP_CAST
+    QVM_OP_CAST,
+    QVM_OP_STR_CONCAT, QVM_OP_STR_LEN,
+    QVM_OP_STR_CHAR_AT, QVM_OP_STR_SLICE, QVM_OP_STR_CMP
 } qvm_opcode;
 
 typedef struct qvm_instruction {

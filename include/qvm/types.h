@@ -10,7 +10,6 @@ extern "C" {
 
 typedef uint16_t qvm_type_id_t;
 
-/* Tipos primitivos nativos (QVM TS 3.3). */
 #define QVM_TYPE_VOID   ((qvm_type_id_t)0x0000u)
 #define QVM_TYPE_BOOL   ((qvm_type_id_t)0x0001u)
 #define QVM_TYPE_I8     ((qvm_type_id_t)0x0002u)
@@ -28,8 +27,8 @@ typedef uint16_t qvm_type_id_t;
 #define QVM_TYPE_CHAR   ((qvm_type_id_t)0x000Eu)
 #define QVM_TYPE_REF    ((qvm_type_id_t)0x000Fu)
 #define QVM_TYPE_PTR    ((qvm_type_id_t)0x0010u)
+#define QVM_TYPE_STRING ((qvm_type_id_t)0x0011u)
 
-/* Rangos reservados (QVM TS 3.2). */
 #define QVM_TYPE_ID_MIN_NATIVE    ((qvm_type_id_t)0x0001u)
 #define QVM_TYPE_ID_MAX_NATIVE    ((qvm_type_id_t)0x00FFu)
 #define QVM_TYPE_ID_MIN_RESERVED  ((qvm_type_id_t)0x0100u)
@@ -52,7 +51,6 @@ typedef struct qvm_type_field {
     qvm_type_id_t type_id;
 } qvm_type_field;
 
-/* Tabla de tipos extendidos del modulo .qcb (QVM TS 3.4). */
 typedef struct qvm_type_entry {
     qvm_type_id_t          id;
     uint8_t                category;
@@ -79,4 +77,4 @@ size_t qvm_type_native_size(qvm_type_id_t id);
 }
 #endif
 
-#endif /* QVM_TYPES_H */
+#endif

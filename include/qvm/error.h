@@ -23,6 +23,7 @@ typedef enum qvm_error {
     QVM_ERR_INVALID_BOOL,
     QVM_ERR_MODULE_INCOMPATIBLE,
     QVM_ERR_IO,
+    QVM_ERR_OUT_OF_BOUNDS,
     QVM_ERR_INTERNAL
 } qvm_error;
 

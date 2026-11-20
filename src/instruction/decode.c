@@ -72,6 +72,7 @@ qvm_error qvm_instruction_decode(const uint8_t *bytes, uint32_t len, qvm_instruc
         case QVM_OP_CAST:
         case QVM_OP_ARITH_NEG:
         case QVM_OP_LOGIC_NOT:
+        case QVM_OP_STR_LEN:
             return decode_1src(out, bytes, len);
 
         case QVM_OP_ARITH_ADD: case QVM_OP_ARITH_SUB:
@@ -81,6 +82,10 @@ qvm_error qvm_instruction_decode(const uint8_t *bytes, uint32_t len, qvm_instruc
         case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
         case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
         case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
+        case QVM_OP_STR_CONCAT:
+        case QVM_OP_STR_CHAR_AT:
+        case QVM_OP_STR_SLICE:
+        case QVM_OP_STR_CMP:
             return decode_2src(out, bytes, len);
 
         case QVM_OP_LOAD_CONST:

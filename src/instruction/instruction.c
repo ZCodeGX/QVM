@@ -25,7 +25,12 @@ static const char *const opcode_names[] = {
     [QVM_OP_CALL]        = "CALL",
     [QVM_OP_RETURN]      = "RETURN",
     [QVM_OP_RETURN_VOID] = "RETURN_VOID",
-    [QVM_OP_CAST]        = "CAST"
+    [QVM_OP_CAST]        = "CAST",
+    [QVM_OP_STR_CONCAT]  = "STR_CONCAT",
+    [QVM_OP_STR_LEN]     = "STR_LEN",
+    [QVM_OP_STR_CHAR_AT] = "STR_CHAR_AT",
+    [QVM_OP_STR_SLICE]   = "STR_SLICE",
+    [QVM_OP_STR_CMP]     = "STR_CMP"
 };
 
 const char *qvm_opcode_name(qvm_opcode op) {
@@ -38,16 +43,23 @@ qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins) {
     if (!ins) return QVM_TYPE_VOID;
 
     switch (ins->opcode) {
-        case QVM_OP_CMP_EQ:
-        case QVM_OP_CMP_NE:
-        case QVM_OP_CMP_LT:
-        case QVM_OP_CMP_LE:
-        case QVM_OP_CMP_GT:
-        case QVM_OP_CMP_GE:
-        case QVM_OP_LOGIC_AND:
-        case QVM_OP_LOGIC_OR:
+        case QVM_OP_CMP_EQ: case QVM_OP_CMP_NE:
+        case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
+        case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
+        case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
         case QVM_OP_LOGIC_NOT:
+        case QVM_OP_STR_CMP:
             return QVM_TYPE_BOOL;
+
+        case QVM_OP_STR_LEN:
+            return QVM_TYPE_U32;
+
+        case QVM_OP_STR_CHAR_AT:
+            return QVM_TYPE_CHAR;
+
+        case QVM_OP_STR_CONCAT:
+        case QVM_OP_STR_SLICE:
+            return QVM_TYPE_STRING;
 
         case QVM_OP_JMP:
         case QVM_OP_JMP_IF:
@@ -64,7 +76,6 @@ qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins) {
 static int check_reg(const qvm_frame *frame, uint32_t idx, int required) {
     if (idx == QVM_INSN_NO_REG) return !required;
     if (idx >= qvm_frame_register_count(frame)) return 0;
-
     const qvm_type_id_t *types = qvm_frame_register_types(frame);
     return types && types[idx] != QVM_TYPE_VOID;
 }
@@ -76,24 +87,23 @@ static qvm_error validate_shape(const qvm_instruction *ins, const qvm_frame *fra
         case QVM_OP_ARITH_NEG:
         case QVM_OP_LOGIC_NOT:
         case QVM_OP_CAST:
+        case QVM_OP_STR_LEN:
             if (!check_reg(frame, ins->dst, 1)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
             break;
 
-        case QVM_OP_ARITH_ADD:
-        case QVM_OP_ARITH_SUB:
-        case QVM_OP_ARITH_MUL:
-        case QVM_OP_ARITH_DIV:
+        case QVM_OP_ARITH_ADD: case QVM_OP_ARITH_SUB:
+        case QVM_OP_ARITH_MUL: case QVM_OP_ARITH_DIV:
         case QVM_OP_ARITH_MOD:
-        case QVM_OP_CMP_EQ:
-        case QVM_OP_CMP_NE:
-        case QVM_OP_CMP_LT:
-        case QVM_OP_CMP_LE:
-        case QVM_OP_CMP_GT:
-        case QVM_OP_CMP_GE:
-        case QVM_OP_LOGIC_AND:
-        case QVM_OP_LOGIC_OR:
+        case QVM_OP_CMP_EQ: case QVM_OP_CMP_NE:
+        case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
+        case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
+        case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
+        case QVM_OP_STR_CONCAT:
+        case QVM_OP_STR_CHAR_AT:
+        case QVM_OP_STR_SLICE:
+        case QVM_OP_STR_CMP:
             if (!check_reg(frame, ins->dst, 1)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src2, 1)) return QVM_ERR_INVALID_ARGUMENT;
