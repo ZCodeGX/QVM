@@ -112,3 +112,33 @@ add_test(NAME qms_zero COMMAND test_qms_zero)
 add_executable(test_qms_runtime tests/runtime/test_qms_runtime.c)
 target_link_libraries(test_qms_runtime qvm_core)
 add_test(NAME qms_runtime COMMAND test_qms_runtime)
+
+add_executable(benchmark_compare examples/benchmark_compare.c)
+target_link_libraries(benchmark_compare qvm_core)
+
+add_executable(debug_loop examples/debug_loop.c)
+target_link_libraries(debug_loop qvm_core)
+
+add_executable(test_qms_simple examples/test_qms_simple.c)
+target_link_libraries(test_qms_simple qvm_core)
+
+add_executable(test_decode_step examples/test_decode_step.c)
+target_link_libraries(test_decode_step qvm_core)
+target_sources(qvm_core PRIVATE src/runtime/runtime_fast.c)
+add_executable(benchmark_optimized examples/benchmark_optimized.c)
+target_link_libraries(benchmark_optimized qvm_core)
+add_executable(benchmark_native examples/benchmark_native.c)
+target_link_libraries(benchmark_native qvm_core)
+target_sources(qvm_core PRIVATE src/jit/jit.c)
+add_executable(benchmark_jit examples/benchmark_jit.c)
+target_link_libraries(benchmark_jit qvm_core)
+
+# QIT - QVM Inline Translation
+target_sources(qvm_core PRIVATE src/qit/qit.c)
+
+add_executable(test_qit tests/qit/test_qit.c)
+target_link_libraries(test_qit qvm_core)
+add_test(NAME qit COMMAND test_qit)
+
+add_executable(benchmark_qit examples/benchmark_qit.c)
+target_link_libraries(benchmark_qit qvm_core)

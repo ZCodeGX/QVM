@@ -30,6 +30,7 @@ qvm_error qvm_instruction_decode(const uint8_t *bytecode, uint32_t size, qvm_ins
         case QVM_OP_LOGIC_NOT:
         case QVM_OP_RETURN:
         case QVM_OP_STR_LEN:
+        case QVM_OP_FREE:
             if (size < 5) return QVM_ERR_INVALID_BYTECODE;
             ins->dst = bytecode[1];
             ins->type_id = rd16_le(bytecode + 2);
@@ -54,6 +55,7 @@ qvm_error qvm_instruction_decode(const uint8_t *bytecode, uint32_t size, qvm_ins
             
         case QVM_OP_LOAD_CONST:
         case QVM_OP_JMP:
+        case QVM_OP_ALLOC:
             if (size < 8) return QVM_ERR_INVALID_BYTECODE;
             ins->dst = bytecode[1];
             ins->type_id = rd16_le(bytecode + 2);
@@ -82,21 +84,11 @@ qvm_error qvm_instruction_decode(const uint8_t *bytecode, uint32_t size, qvm_ins
             }
             break;
             
-        case QVM_OP_ALLOC:
-            if (size < 8) return QVM_ERR_INVALID_BYTECODE;
-            ins->dst = bytecode[1];
-            ins->type_id = rd16_le(bytecode + 2);
-            ins->imm32 = rd32_le(bytecode + 4);
-            break;
-            
-        case QVM_OP_FREE:
-            if (size < 4) return QVM_ERR_INVALID_BYTECODE;
-            ins->src1 = bytecode[1];
-            break;
-            
+        // QMS-Zero: LOAD_PTR y STORE_PTR tienen 9 bytes
+        // Formato: [opcode, dst, src, type_id(2), imm32(4)]
         case QVM_OP_LOAD_PTR:
         case QVM_OP_STORE_PTR:
-            if (size < 8) return QVM_ERR_INVALID_BYTECODE;
+            if (size < 9) return QVM_ERR_INVALID_BYTECODE;
             ins->dst = bytecode[1];
             ins->src1 = bytecode[2];
             ins->type_id = rd16_le(bytecode + 3);
