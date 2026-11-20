@@ -49,6 +49,10 @@ add_executable(test_decode tests/instruction/test_decode.c)
 target_link_libraries(test_decode qvm_core)
 add_test(NAME decode COMMAND test_decode)
 
+add_executable(test_execute tests/instruction/test_execute.c)
+target_link_libraries(test_execute qvm_core)
+add_test(NAME execute COMMAND test_execute)
+
 add_executable(test_gcq tests/memory/test_gcq.c)
 target_link_libraries(test_gcq qvm_core)
 add_test(NAME gcq COMMAND test_gcq)
@@ -57,6 +61,10 @@ add_executable(test_runtime tests/runtime/test_runtime.c)
 target_link_libraries(test_runtime qvm_core)
 add_test(NAME runtime COMMAND test_runtime)
 
+add_executable(test_call_return tests/runtime/test_call_return.c)
+target_link_libraries(test_call_return qvm_core)
+add_test(NAME call_return COMMAND test_call_return)
+
 add_executable(test_loader tests/loader/test_loader.c)
 target_link_libraries(test_loader qvm_core)
 add_test(NAME loader COMMAND test_loader)
@@ -64,10 +72,6 @@ add_test(NAME loader COMMAND test_loader)
 add_executable(test_verifier tests/verifier/test_verifier.c)
 target_link_libraries(test_verifier qvm_core)
 add_test(NAME verifier COMMAND test_verifier)
-
-add_executable(test_call_return tests/runtime/test_call_return.c)
-target_link_libraries(test_call_return qvm_core)
-add_test(NAME call_return COMMAND test_call_return)
 
 add_executable(demo examples/demo.c)
 target_link_libraries(demo qvm_core)
