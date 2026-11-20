@@ -35,3 +35,30 @@ const char *qvm_error_message(qvm_error err);
 #endif
 
 #endif /* QVM_ERROR_H */
+
+// Errores específicos de QMS-Zero (Detectados por el Verifier)
+#define QVM_ERR_MEMORY_LEAK       30  // Reasignación de registro OWNED sin FREE previo
+#define QVM_ERR_DOUBLE_FREE       31  // Intento de liberar un registro CONSUMED
+#define QVM_ERR_UNINITIALIZED_READ  32  // Lectura de registro UNINIT
+#define QVM_ERR_UNINITIALIZED_WRITE 33  // Escritura en registro UNINIT
+#define QVM_ERR_INVALID_BORROW    34  // Violación de reglas de préstamo (Aliasing XOR Mutación)
+
+// Errores específicos de QMS-Zero
+#ifndef QVM_ERR_MEMORY_LEAK
+#define QVM_ERR_MEMORY_LEAK       30
+#endif
+#ifndef QVM_ERR_DOUBLE_FREE
+#define QVM_ERR_DOUBLE_FREE       31
+#endif
+#ifndef QVM_ERR_USE_AFTER_FREE
+#define QVM_ERR_USE_AFTER_FREE    32
+#endif
+#ifndef QVM_ERR_UNINITIALIZED_READ
+#define QVM_ERR_UNINITIALIZED_READ  33
+#endif
+#ifndef QVM_ERR_UNINITIALIZED_WRITE
+#define QVM_ERR_UNINITIALIZED_WRITE 34
+#endif
+#ifndef QVM_ERR_INVALID_BORROW
+#define QVM_ERR_INVALID_BORROW    35
+#endif

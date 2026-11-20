@@ -54,3 +54,12 @@ qvm_error     qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *fra
 #endif
 
 #endif
+
+// ==========================================
+// QMS-Zero Opcodes (Zero-Overhead Memory)
+// ==========================================
+#define QVM_OP_ALLOC      0x30  // Asignar memoria: ALLOC dst_reg, size, type_id
+#define QVM_OP_FREE       0x31  // Liberar memoria: FREE src_reg
+#define QVM_OP_LOAD_PTR   0x32  // Leer de puntero: LOAD_PTR dst_reg, src_ptr_reg, offset
+#define QVM_OP_STORE_PTR  0x33  // Escribir en puntero: STORE_PTR dst_ptr_reg, src_reg, offset
+

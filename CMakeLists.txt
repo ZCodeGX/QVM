@@ -103,3 +103,8 @@ target_link_libraries(demo_strings_native qvm_core)
 add_executable(benchmark examples/benchmark.c)
 target_link_libraries(benchmark qvm_core)
 
+
+add_executable(test_qms_zero tests/verifier/test_qms_zero.c src/verifier/verifier_qms.c)
+target_link_libraries(test_qms_zero qvm_core)
+add_test(NAME qms_zero COMMAND test_qms_zero)
+
