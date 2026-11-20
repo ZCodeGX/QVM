@@ -2,6 +2,7 @@
 #include <string.h>
 #include "qvm/runtime.h"
 #include "qvm/registers.h"
+#include "qvm/string.h"
 
 qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error *err) {
     if (err) *err = QVM_OK;
@@ -118,6 +119,54 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
                 rt->pc += size;
                 break;
             }
+            case QVM_OP_MOV: {
+                qvm_value v;
+                err = qvm_register_read(frame, ins.src1, &v);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                err = qvm_register_write(frame, ins.dst, v);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                rt->pc += size;
+                break;
+            }
+            case QVM_OP_ARITH_ADD: {
+                qvm_value a, b, res = {0};
+                err = qvm_register_read(frame, ins.src1, &a);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                err = qvm_register_read(frame, ins.src2, &b);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                res.type_id = ins.type_id;
+                res.payload = a.payload + b.payload;
+                err = qvm_register_write(frame, ins.dst, res);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                rt->pc += size;
+                break;
+            }
+            case QVM_OP_ARITH_SUB: {
+                qvm_value a, b, res = {0};
+                err = qvm_register_read(frame, ins.src1, &a);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                err = qvm_register_read(frame, ins.src2, &b);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                res.type_id = ins.type_id;
+                res.payload = a.payload - b.payload;
+                err = qvm_register_write(frame, ins.dst, res);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                rt->pc += size;
+                break;
+            }
+            case QVM_OP_CMP_LT: {
+                qvm_value a, b, res = {0};
+                err = qvm_register_read(frame, ins.src1, &a);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                err = qvm_register_read(frame, ins.src2, &b);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                res.type_id = QVM_TYPE_BOOL;
+                res.payload = (a.payload < b.payload) ? 1 : 0;
+                err = qvm_register_write(frame, ins.dst, res);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                rt->pc += size;
+                break;
+            }
             case QVM_OP_JMP:
                 if (ins.imm32 >= rt->module->bytecode_size) {
                     qvm_instruction_free(&ins);
@@ -126,13 +175,11 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
                 rt->pc = ins.imm32;
                 break;
 
-            case QVM_OP_JMP_IF:
-            case QVM_OP_JMP_IF_NOT: {
+            case QVM_OP_JMP_IF: {
                 qvm_value cond;
                 err = qvm_register_read(frame, ins.src1, &cond);
                 if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
-                int take = (ins.opcode == QVM_OP_JMP_IF) ? (cond.payload != 0) : (cond.payload == 0);
-                if (take) {
+                if (cond.payload != 0) {
                     if (ins.imm32 >= rt->module->bytecode_size) {
                         qvm_instruction_free(&ins);
                         return QVM_ERR_INVALID_BYTECODE;
