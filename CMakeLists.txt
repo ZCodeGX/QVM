@@ -15,6 +15,9 @@ add_library(qvm_core STATIC
     src/core/version.c
     src/frames/frames.c
     src/registers/registers.c
+    src/instruction/instruction.c
+    src/instruction/decode.c
+    src/instruction/execute.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
@@ -33,3 +36,7 @@ add_test(NAME frames COMMAND test_frames)
 add_executable(test_registers tests/registers/test_registers.c)
 target_link_libraries(test_registers qvm_core)
 add_test(NAME registers COMMAND test_registers)
+
+add_executable(test_instruction tests/instruction/test_instruction.c)
+target_link_libraries(test_instruction qvm_core)
+add_test(NAME instruction COMMAND test_instruction)
