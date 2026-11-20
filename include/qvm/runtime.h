@@ -7,18 +7,11 @@
 #include "qvm/frames.h"
 #include "qvm/instruction.h"
 #include "qvm/value.h"
+#include "qvm/loader.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct qvm_module {
-    const uint8_t   *bytecode;
-    uint32_t         bytecode_size;
-    const qvm_value *constants;
-    uint32_t         constant_count;
-    uint32_t         function_count;
-} qvm_module;
 
 typedef struct qvm_runtime {
     qvm_context     *ctx;

@@ -20,6 +20,7 @@ add_library(qvm_core STATIC
     src/instruction/execute.c
     src/memory/gcq/gcq.c
     src/runtime/runtime.c
+    src/loader/loader.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
@@ -54,3 +55,7 @@ add_test(NAME gcq COMMAND test_gcq)
 add_executable(test_runtime tests/runtime/test_runtime.c)
 target_link_libraries(test_runtime qvm_core)
 add_test(NAME runtime COMMAND test_runtime)
+
+add_executable(test_loader tests/loader/test_loader.c)
+target_link_libraries(test_loader qvm_core)
+add_test(NAME loader COMMAND test_loader)
