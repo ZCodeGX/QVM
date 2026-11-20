@@ -1,8 +1,7 @@
-/* QVM core - contexto de ejecucion. Estado principal de una instancia. */
 #include <stdlib.h>
 #include <string.h>
-
 #include "qvm/context.h"
+#include "qvm/type_table.h"
 
 struct qvm_context {
     qvm_config      config;
@@ -24,17 +23,15 @@ qvm_context *qvm_context_create(const qvm_config *cfg, qvm_error *err) {
     return ctx;
 }
 
-void qvm_context_destroy(qvm_context *ctx) { free(ctx); }
-
-const qvm_config *qvm_context_config(const qvm_context *ctx) { return ctx ? &ctx->config : NULL; }
-const qvm_limits *qvm_context_limits(const qvm_context *ctx) { return ctx ? &ctx->config.limits : NULL; }
-qvm_mode          qvm_context_mode  (const qvm_context *ctx) { return ctx ?  ctx->config.mode   : QVM_MODE_SAFE; }
-const qvm_type_table *qvm_context_types(const qvm_context *ctx) { return ctx ? &ctx->types : NULL; }
-
-qvm_state qvm_context_state(const qvm_context *ctx) {
-    return ctx ? ctx->state : QVM_STATE_FAILED;
+void qvm_context_destroy(qvm_context *ctx) {
+    if (!ctx) return;
+    qvm_type_table_clear(&ctx->types);
+    free(ctx);
 }
 
-void qvm_context_set_state(qvm_context *ctx, qvm_state s) {
-    if (ctx) ctx->state = s;
-}
+const qvm_config      *qvm_context_config(const qvm_context *ctx) { return ctx ? &ctx->config : NULL; }
+const qvm_limits      *qvm_context_limits(const qvm_context *ctx) { return ctx ? &ctx->config.limits : NULL; }
+qvm_mode               qvm_context_mode  (const qvm_context *ctx) { return ctx ? ctx->config.mode : QVM_MODE_SAFE; }
+const qvm_type_table  *qvm_context_types (const qvm_context *ctx) { return ctx ? &ctx->types : NULL; }
+qvm_state              qvm_context_state (const qvm_context *ctx) { return ctx ? ctx->state : QVM_STATE_FAILED; }
+void                   qvm_context_set_state(qvm_context *ctx, qvm_state s) { if (ctx) ctx->state = s; }

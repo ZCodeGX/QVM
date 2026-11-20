@@ -12,6 +12,7 @@ add_library(qvm_core STATIC
     src/core/config.c
     src/core/context.c
     src/core/lifecycle.c
+    src/core/type_table.c
     src/core/version.c
     src/frames/frames.c
     src/registers/registers.c
@@ -52,6 +53,10 @@ add_test(NAME decode COMMAND test_decode)
 add_executable(test_execute tests/instruction/test_execute.c)
 target_link_libraries(test_execute qvm_core)
 add_test(NAME execute COMMAND test_execute)
+
+add_executable(test_type_table tests/core/test_type_table.c)
+target_link_libraries(test_type_table qvm_core)
+add_test(NAME type_table COMMAND test_type_table)
 
 add_executable(test_gcq tests/memory/test_gcq.c)
 target_link_libraries(test_gcq qvm_core)
