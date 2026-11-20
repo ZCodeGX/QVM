@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "qvm/loader.h"
+#include "qvm/verifier.h"
 
 static uint32_t rd32(const uint8_t *b) {
     return (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
@@ -74,6 +75,18 @@ qvm_module *qvm_module_load_from_memory(const uint8_t *data, uint32_t size, qvm_
         if (err) *err = perr;
         return NULL;
     }
+
+    const qvm_config *cfg = qvm_context_config(ctx);
+    if (cfg && cfg->verify_on_load) {
+        qvm_verifier_result vr;
+        qvm_error verr = qvm_verify_module(module, ctx, &vr);
+        if (verr != QVM_OK) {
+            qvm_module_destroy(module);
+            if (err) *err = QVM_ERR_VERIFICATION_FAILED;
+            return NULL;
+        }
+    }
+
     return module;
 }
 
