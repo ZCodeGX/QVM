@@ -3,63 +3,95 @@
 
 #include <stdint.h>
 #include "qvm/error.h"
-#include "qvm/frames.h"
 #include "qvm/types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define QVM_INSN_NO_REG ((uint32_t)UINT32_MAX)
+#define QVM_INSN_NO_REG 0xFF
 
 typedef enum qvm_opcode {
-    QVM_OP_MOV = 1,
-    QVM_OP_LOAD_CONST,
-    QVM_OP_ARITH_ADD, QVM_OP_ARITH_SUB, QVM_OP_ARITH_MUL,
-    QVM_OP_ARITH_DIV, QVM_OP_ARITH_MOD, QVM_OP_ARITH_NEG,
-    QVM_OP_CMP_EQ, QVM_OP_CMP_NE, QVM_OP_CMP_LT,
-    QVM_OP_CMP_LE, QVM_OP_CMP_GT, QVM_OP_CMP_GE,
-    QVM_OP_LOGIC_AND, QVM_OP_LOGIC_OR, QVM_OP_LOGIC_NOT,
-    QVM_OP_JMP, QVM_OP_JMP_IF, QVM_OP_JMP_IF_NOT,
-    QVM_OP_CALL,
-    QVM_OP_RETURN, QVM_OP_RETURN_VOID,
-    QVM_OP_CAST,
-    QVM_OP_STR_CONCAT, QVM_OP_STR_LEN,
-    QVM_OP_STR_CHAR_AT, QVM_OP_STR_SLICE, QVM_OP_STR_CMP,
-    QVM_OP_CALL_NATIVE
+    // Control de flujo
+    QVM_OP_JMP          = 0x01,
+    QVM_OP_JMP_IF       = 0x02,
+    QVM_OP_JMP_IF_NOT   = 0x03,
+    QVM_OP_CALL         = 0x04,
+    QVM_OP_CALL_NATIVE  = 0x05,
+    QVM_OP_RETURN       = 0x06,
+    QVM_OP_RETURN_VOID  = 0x07,
+    
+    // Movimiento y constantes
+    QVM_OP_MOV          = 0x10,
+    QVM_OP_LOAD_CONST   = 0x11,
+    
+    // Aritmética
+    QVM_OP_ARITH_ADD    = 0x20,
+    QVM_OP_ARITH_SUB    = 0x21,
+    QVM_OP_ARITH_MUL    = 0x22,
+    QVM_OP_ARITH_DIV    = 0x23,
+    QVM_OP_ARITH_MOD    = 0x24,
+    QVM_OP_ARITH_NEG    = 0x25,
+    
+    // Comparación
+    QVM_OP_CMP_EQ       = 0x30,
+    QVM_OP_CMP_NE       = 0x31,
+    QVM_OP_CMP_LT       = 0x32,
+    QVM_OP_CMP_LE       = 0x33,
+    QVM_OP_CMP_GT       = 0x34,
+    QVM_OP_CMP_GE       = 0x35,
+    
+    // Lógica
+    QVM_OP_LOGIC_AND    = 0x40,
+    QVM_OP_LOGIC_OR     = 0x41,
+    QVM_OP_LOGIC_NOT    = 0x42,
+    
+    // Conversión
+    QVM_OP_CAST         = 0x50,
+    
+    // Strings
+    QVM_OP_STR_CONCAT   = 0x60,
+    QVM_OP_STR_LEN      = 0x61,
+    QVM_OP_STR_CHAR_AT  = 0x62,
+    QVM_OP_STR_SLICE    = 0x63,
+    QVM_OP_STR_CMP      = 0x64,
+    
+    // ==========================================
+    // QMS-Zero Opcodes (Zero-Overhead Memory)
+    // ==========================================
+    QVM_OP_ALLOC        = 0x70,
+    QVM_OP_FREE         = 0x71,
+    QVM_OP_LOAD_PTR     = 0x72,
+    QVM_OP_STORE_PTR    = 0x73
 } qvm_opcode;
 
 typedef struct qvm_instruction {
-    qvm_opcode      opcode;
-    qvm_type_id_t   type_id;
-    uint32_t        dst;
-    uint32_t        src1;
-    uint32_t        src2;
-    uint32_t        imm32;
-    uint32_t       *args;
-    uint16_t        arg_count;
+    qvm_opcode opcode;
+    uint8_t    dst;
+    uint8_t    src1;
+    uint8_t    src2;
+    uint16_t   type_id;
+    uint32_t   imm32;
+    uint8_t    arg_count;
+    uint8_t    args[4];
 } qvm_instruction;
 
-const char   *qvm_opcode_name(qvm_opcode op);
-qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins);
-qvm_error     qvm_instruction_validate(const qvm_instruction *ins, const qvm_frame *frame);
+qvm_error qvm_instruction_decode(const uint8_t *bytecode, uint32_t size, qvm_instruction *ins);
+void      qvm_instruction_free(qvm_instruction *ins);
+const char* qvm_opcode_name(qvm_opcode op);
 
-qvm_error     qvm_instruction_decode(const uint8_t *bytes, uint32_t len, qvm_instruction *out);
-void          qvm_instruction_free(qvm_instruction *ins);
+// Forward declaration
+typedef struct qvm_frame qvm_frame;
 
-qvm_error     qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame);
+// Declaración de qvm_instruction_execute (usada por el runtime como fallback)
+qvm_error qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // QVM_INSTRUCTION_H
 
-// ==========================================
-// QMS-Zero Opcodes (Zero-Overhead Memory)
-// ==========================================
-#define QVM_OP_ALLOC      0x30  // Asignar memoria: ALLOC dst_reg, size, type_id
-#define QVM_OP_FREE       0x31  // Liberar memoria: FREE src_reg
-#define QVM_OP_LOAD_PTR   0x32  // Leer de puntero: LOAD_PTR dst_reg, src_ptr_reg, offset
-#define QVM_OP_STORE_PTR  0x33  // Escribir en puntero: STORE_PTR dst_ptr_reg, src_reg, offset
-
+// Funciones auxiliares para testing
+qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins);
+qvm_error qvm_instruction_validate(const qvm_instruction *ins, struct qvm_frame *frame);

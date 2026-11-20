@@ -1,8 +1,11 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "qvm/runtime.h"
+#include "qvm/instruction.h"
 #include "qvm/registers.h"
 #include "qvm/string.h"
+#include "qvm/memory.h"
 
 qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error *err) {
     if (err) *err = QVM_OK;
@@ -42,6 +45,12 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
         return NULL;
     }
     
+    // Inicializar región de frame para QMS-Zero
+    rt->frame_region.base = (uint8_t *)malloc(1024 * 1024); // 1MB por defecto
+    rt->frame_region.capacity = 1024 * 1024;
+    rt->frame_region.offset = 0;
+    rt->frame_region.id = QVM_REGION_FRAME;
+    
     return rt;
 }
 
@@ -54,6 +63,7 @@ void qvm_runtime_destroy(qvm_runtime *rt) {
     free(rt->return_addresses);
     free(rt->return_destinations);
     qvm_ffi_registry_destroy(rt->ffi);
+    free(rt->frame_region.base);
     free(rt);
 }
 
@@ -82,7 +92,12 @@ static uint32_t insn_size(const qvm_instruction *ins) {
         case QVM_OP_STR_CMP:
             return 6;
         case QVM_OP_LOAD_CONST: case QVM_OP_JMP:
+        case QVM_OP_ALLOC:
+        case QVM_OP_LOAD_PTR:
+        case QVM_OP_STORE_PTR:
             return 8;
+        case QVM_OP_FREE:
+            return 4;
         case QVM_OP_JMP_IF: case QVM_OP_JMP_IF_NOT:
             return 9;
         case QVM_OP_CALL:
@@ -190,6 +205,117 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
                 }
                 break;
             }
+            
+            // ==========================================
+            // QMS-Zero Opcodes (Zero-Overhead)
+            // ==========================================
+            
+            case QVM_OP_ALLOC: {
+                // ALLOC dst_reg, size, type_id
+                // Sin checks: el Verifier ya validó todo
+                uint32_t alloc_size = ins.imm32;
+                uint16_t type_id = ins.type_id;
+                
+                // Bump allocation en la región de frame
+                uint32_t offset = rt->frame_region.offset;
+                rt->frame_region.offset += alloc_size;
+                
+                // Crear puntero QMS-Zero
+                qvm_ptr ptr = {
+                    .region_id = QVM_REGION_FRAME,
+                    .offset = offset,
+                    .size = alloc_size,
+                    .type_id = type_id
+                };
+                
+                // Guardar el puntero en el registro (como valor)
+                qvm_value v = {0};
+                v.type_id = QVM_TYPE_PTR;
+                memcpy(&v.payload, &ptr, sizeof(qvm_ptr));
+                
+                err = qvm_register_write(frame, ins.dst, v);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                rt->pc += size;
+                break;
+            }
+            
+            case QVM_OP_FREE: {
+                // FREE src_reg
+                // Sin checks: el Verifier ya validó que es OWNED
+                // En QMS-Zero con regiones, FREE es un no-op (la región se limpia sola)
+                // Pero marcamos el registro como consumido para el Verifier
+                
+                qvm_value v = {0};
+                v.type_id = QVM_TYPE_PTR;
+                // Marcar como consumido (offset = 0, size = 0)
+                qvm_ptr ptr = {0};
+                memcpy(&v.payload, &ptr, sizeof(qvm_ptr));
+                
+                err = qvm_register_write(frame, ins.src1, v);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                rt->pc += size;
+                break;
+            }
+            
+            case QVM_OP_LOAD_PTR: {
+                // LOAD_PTR dst_reg, src_ptr_reg, offset
+                // ZERO-OVERHEAD: sin bounds checking, sin verificación de estado
+                // El Verifier ya garantizó que es seguro
+                
+                qvm_value ptr_val;
+                err = qvm_register_read(frame, ins.src1, &ptr_val);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                qvm_ptr ptr;
+                memcpy(&ptr, &ptr_val.payload, sizeof(qvm_ptr));
+                
+                // Calcular dirección real: base + offset + access_offset
+                uint32_t access_offset = ins.imm32;
+                void *src_addr = rt->frame_region.base + ptr.offset + access_offset;
+                
+                // Leer 4 bytes (I32) directamente - SIN CHECKS
+                int32_t value = *(int32_t *)src_addr;
+                
+                // Escribir en el registro destino
+                qvm_value result = {0};
+                result.type_id = QVM_TYPE_I32;
+                result.payload = (uint64_t)value;
+                
+                err = qvm_register_write(frame, ins.dst, result);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                rt->pc += size;
+                break;
+            }
+            
+            case QVM_OP_STORE_PTR: {
+                // STORE_PTR dst_ptr_reg, src_reg, offset
+                // ZERO-OVERHEAD: sin bounds checking, sin verificación de estado
+                
+                qvm_value ptr_val;
+                err = qvm_register_read(frame, ins.dst, &ptr_val);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                qvm_ptr ptr;
+                memcpy(&ptr, &ptr_val.payload, sizeof(qvm_ptr));
+                
+                qvm_value src_val;
+                err = qvm_register_read(frame, ins.src1, &src_val);
+                if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
+                
+                // Calcular dirección real
+                uint32_t access_offset = ins.imm32;
+                void *dst_addr = rt->frame_region.base + ptr.offset + access_offset;
+                
+                // Escribir 4 bytes (I32) directamente - SIN CHECKS
+                *(int32_t *)dst_addr = (int32_t)src_val.payload;
+                
+                rt->pc += size;
+                break;
+            }
+            
             case QVM_OP_CALL: {
                 if (ins.imm32 >= rt->module->function_count) {
                     qvm_instruction_free(&ins);

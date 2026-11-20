@@ -108,3 +108,7 @@ add_executable(test_qms_zero tests/verifier/test_qms_zero.c src/verifier/verifie
 target_link_libraries(test_qms_zero qvm_core)
 add_test(NAME qms_zero COMMAND test_qms_zero)
 
+
+add_executable(test_qms_runtime tests/runtime/test_qms_runtime.c)
+target_link_libraries(test_qms_runtime qvm_core)
+add_test(NAME qms_runtime COMMAND test_qms_runtime)

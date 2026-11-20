@@ -1,174 +1,118 @@
-#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 #include "qvm/instruction.h"
+#include "qvm/frames.h"
 
-static const char *const opcode_names[] = {
-    [QVM_OP_MOV]         = "MOV",
-    [QVM_OP_LOAD_CONST]  = "LOAD_CONST",
-    [QVM_OP_ARITH_ADD]   = "ARITH_ADD",
-    [QVM_OP_ARITH_SUB]   = "ARITH_SUB",
-    [QVM_OP_ARITH_MUL]   = "ARITH_MUL",
-    [QVM_OP_ARITH_DIV]   = "ARITH_DIV",
-    [QVM_OP_ARITH_MOD]   = "ARITH_MOD",
-    [QVM_OP_ARITH_NEG]   = "ARITH_NEG",
-    [QVM_OP_CMP_EQ]      = "CMP_EQ",
-    [QVM_OP_CMP_NE]      = "CMP_NE",
-    [QVM_OP_CMP_LT]      = "CMP_LT",
-    [QVM_OP_CMP_LE]      = "CMP_LE",
-    [QVM_OP_CMP_GT]      = "CMP_GT",
-    [QVM_OP_CMP_GE]      = "CMP_GE",
-    [QVM_OP_LOGIC_AND]   = "LOGIC_AND",
-    [QVM_OP_LOGIC_OR]    = "LOGIC_OR",
-    [QVM_OP_LOGIC_NOT]   = "LOGIC_NOT",
-    [QVM_OP_JMP]         = "JMP",
-    [QVM_OP_JMP_IF]      = "JMP_IF",
-    [QVM_OP_JMP_IF_NOT]  = "JMP_IF_NOT",
-    [QVM_OP_CALL]        = "CALL",
-    [QVM_OP_RETURN]      = "RETURN",
-    [QVM_OP_RETURN_VOID] = "RETURN_VOID",
-    [QVM_OP_CAST]        = "CAST",
-    [QVM_OP_STR_CONCAT]  = "STR_CONCAT",
-    [QVM_OP_STR_LEN]     = "STR_LEN",
-    [QVM_OP_STR_CHAR_AT] = "STR_CHAR_AT",
-    [QVM_OP_STR_SLICE]   = "STR_SLICE",
-    [QVM_OP_STR_CMP]     = "STR_CMP",
-    [QVM_OP_CALL_NATIVE] = "CALL_NATIVE"
-};
+const char* qvm_opcode_name(qvm_opcode op) {
+    switch (op) {
+        case QVM_OP_JMP: return "JMP";
+        case QVM_OP_JMP_IF: return "JMP_IF";
+        case QVM_OP_JMP_IF_NOT: return "JMP_IF_NOT";
+        case QVM_OP_CALL: return "CALL";
+        case QVM_OP_CALL_NATIVE: return "CALL_NATIVE";
+        case QVM_OP_RETURN: return "RETURN";
+        case QVM_OP_RETURN_VOID: return "RETURN_VOID";
+        case QVM_OP_MOV: return "MOV";
+        case QVM_OP_LOAD_CONST: return "LOAD_CONST";
+        case QVM_OP_ARITH_ADD: return "ARITH_ADD";
+        case QVM_OP_ARITH_SUB: return "ARITH_SUB";
+        case QVM_OP_ARITH_MUL: return "ARITH_MUL";
+        case QVM_OP_ARITH_DIV: return "ARITH_DIV";
+        case QVM_OP_ARITH_MOD: return "ARITH_MOD";
+        case QVM_OP_ARITH_NEG: return "ARITH_NEG";
+        case QVM_OP_CMP_EQ: return "CMP_EQ";
+        case QVM_OP_CMP_NE: return "CMP_NE";
+        case QVM_OP_CMP_LT: return "CMP_LT";
+        case QVM_OP_CMP_LE: return "CMP_LE";
+        case QVM_OP_CMP_GT: return "CMP_GT";
+        case QVM_OP_CMP_GE: return "CMP_GE";
+        case QVM_OP_LOGIC_AND: return "LOGIC_AND";
+        case QVM_OP_LOGIC_OR: return "LOGIC_OR";
+        case QVM_OP_LOGIC_NOT: return "LOGIC_NOT";
+        case QVM_OP_CAST: return "CAST";
+        case QVM_OP_STR_CONCAT: return "STR_CONCAT";
+        case QVM_OP_STR_LEN: return "STR_LEN";
+        case QVM_OP_STR_CHAR_AT: return "STR_CHAR_AT";
+        case QVM_OP_STR_SLICE: return "STR_SLICE";
+        case QVM_OP_STR_CMP: return "STR_CMP";
+        case QVM_OP_ALLOC: return "ALLOC";
+        case QVM_OP_FREE: return "FREE";
+        case QVM_OP_LOAD_PTR: return "LOAD_PTR";
+        case QVM_OP_STORE_PTR: return "STORE_PTR";
+        default: return "UNKNOWN";
+    }
+}
 
-const char *qvm_opcode_name(qvm_opcode op) {
-    size_t i = (size_t)op;
-    if (i >= sizeof opcode_names / sizeof opcode_names[0]) return NULL;
-    return opcode_names[i];
+void qvm_instruction_free(qvm_instruction *ins) {
+    if (!ins) return;
+    // Los args ahora están en el array fijo, no hay nada que liberar
+    // Pero el test espera que arg_count se ponga a 0
+    ins->arg_count = 0;
 }
 
 qvm_type_id_t qvm_instruction_result_type(const qvm_instruction *ins) {
     if (!ins) return QVM_TYPE_VOID;
-
+    
     switch (ins->opcode) {
-        case QVM_OP_CMP_EQ: case QVM_OP_CMP_NE:
-        case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
-        case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
-        case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
+        case QVM_OP_CMP_EQ:
+        case QVM_OP_CMP_NE:
+        case QVM_OP_CMP_LT:
+        case QVM_OP_CMP_LE:
+        case QVM_OP_CMP_GT:
+        case QVM_OP_CMP_GE:
+        case QVM_OP_LOGIC_AND:
+        case QVM_OP_LOGIC_OR:
         case QVM_OP_LOGIC_NOT:
-        case QVM_OP_STR_CMP:
             return QVM_TYPE_BOOL;
-
+        
+        case QVM_OP_ARITH_ADD:
+        case QVM_OP_ARITH_SUB:
+        case QVM_OP_ARITH_MUL:
+        case QVM_OP_ARITH_DIV:
+        case QVM_OP_ARITH_MOD:
+        case QVM_OP_ARITH_NEG:
+            return ins->type_id;
+        
+        case QVM_OP_CAST:
+            return ins->type_id;
+        
         case QVM_OP_STR_LEN:
-            return QVM_TYPE_U32;
-
-        case QVM_OP_STR_CHAR_AT:
-            return QVM_TYPE_CHAR;
-
+            return QVM_TYPE_I32;
+        
         case QVM_OP_STR_CONCAT:
+        case QVM_OP_STR_CHAR_AT:
         case QVM_OP_STR_SLICE:
             return QVM_TYPE_STRING;
-
-        case QVM_OP_JMP:
-        case QVM_OP_JMP_IF:
-        case QVM_OP_JMP_IF_NOT:
-        case QVM_OP_RETURN:
-        case QVM_OP_RETURN_VOID:
+        
+        default:
             return QVM_TYPE_VOID;
-
-        default:
-            return ins->type_id;
     }
 }
 
-static int check_reg(const qvm_frame *frame, uint32_t idx, int required) {
-    if (idx == QVM_INSN_NO_REG) return !required;
-    if (idx >= qvm_frame_register_count(frame)) return 0;
-    const qvm_type_id_t *types = qvm_frame_register_types(frame);
-    return types && types[idx] != QVM_TYPE_VOID;
-}
-
-static qvm_error validate_shape(const qvm_instruction *ins, const qvm_frame *frame) {
-    switch (ins->opcode) {
-        case QVM_OP_MOV:
-        case QVM_OP_LOAD_CONST:
-        case QVM_OP_ARITH_NEG:
-        case QVM_OP_LOGIC_NOT:
-        case QVM_OP_CAST:
-        case QVM_OP_STR_LEN:
-            if (!check_reg(frame, ins->dst, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_ARITH_ADD: case QVM_OP_ARITH_SUB:
-        case QVM_OP_ARITH_MUL: case QVM_OP_ARITH_DIV:
-        case QVM_OP_ARITH_MOD:
-        case QVM_OP_CMP_EQ: case QVM_OP_CMP_NE:
-        case QVM_OP_CMP_LT: case QVM_OP_CMP_LE:
-        case QVM_OP_CMP_GT: case QVM_OP_CMP_GE:
-        case QVM_OP_LOGIC_AND: case QVM_OP_LOGIC_OR:
-        case QVM_OP_STR_CONCAT:
-        case QVM_OP_STR_CHAR_AT:
-        case QVM_OP_STR_SLICE:
-        case QVM_OP_STR_CMP:
-            if (!check_reg(frame, ins->dst, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_JMP:
-            if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_JMP_IF:
-        case QVM_OP_JMP_IF_NOT:
-            if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_CALL:
-        case QVM_OP_CALL_NATIVE:
-            if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_RETURN:
-            if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 1)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        case QVM_OP_RETURN_VOID:
-            if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src1, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
-            break;
-
-        default:
-            return QVM_ERR_INVALID_BYTECODE;
-    }
-
-    if (ins->opcode != QVM_OP_CALL && ins->opcode != QVM_OP_CALL_NATIVE && ins->arg_count != 0) {
-        return QVM_ERR_INVALID_ARGUMENT;
-    }
-
-    return QVM_OK;
-}
-
-qvm_error qvm_instruction_validate(const qvm_instruction *ins, const qvm_frame *frame) {
+qvm_error qvm_instruction_validate(const qvm_instruction *ins, struct qvm_frame *frame) {
     if (!ins || !frame) return QVM_ERR_INVALID_ARGUMENT;
-    if (!qvm_opcode_name(ins->opcode)) return QVM_ERR_INVALID_BYTECODE;
-
-    qvm_error err = validate_shape(ins, frame);
-    if (err != QVM_OK) return err;
-
-    if (ins->arg_count != 0 && !ins->args) {
+    
+    uint32_t reg_count = qvm_frame_register_count(frame);
+    
+    if (ins->dst != QVM_INSN_NO_REG && ins->dst >= reg_count) {
         return QVM_ERR_INVALID_ARGUMENT;
     }
-
-    for (uint16_t i = 0; i < ins->arg_count; ++i) {
-        if (!check_reg(frame, ins->args[i], 1)) {
-            return QVM_ERR_INVALID_ARGUMENT;
+    
+    if (ins->src1 != QVM_INSN_NO_REG && ins->src1 >= reg_count) {
+        return QVM_ERR_INVALID_ARGUMENT;
+    }
+    
+    if (ins->src2 != QVM_INSN_NO_REG && ins->src2 >= reg_count) {
+        return QVM_ERR_INVALID_ARGUMENT;
+    }
+    
+    if (ins->opcode == QVM_OP_CALL || ins->opcode == QVM_OP_CALL_NATIVE) {
+        for (uint8_t i = 0; i < ins->arg_count; i++) {
+            if (ins->args[i] >= reg_count) {
+                return QVM_ERR_INVALID_ARGUMENT;
+            }
         }
     }
-
+    
     return QVM_OK;
 }
