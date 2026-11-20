@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "qvm/runtime.h"
 #include "qvm/registers.h"
 
@@ -30,6 +31,16 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
         if (err) *err = QVM_ERR_OUT_OF_MEMORY;
         return NULL;
     }
+    
+    rt->ffi = qvm_ffi_registry_create(err);
+    if (!rt->ffi) {
+        free(rt->call_stack);
+        free(rt->return_addresses);
+        free(rt->return_destinations);
+        free(rt);
+        return NULL;
+    }
+    
     return rt;
 }
 
@@ -41,7 +52,12 @@ void qvm_runtime_destroy(qvm_runtime *rt) {
     free(rt->call_stack);
     free(rt->return_addresses);
     free(rt->return_destinations);
+    qvm_ffi_registry_destroy(rt->ffi);
     free(rt);
+}
+
+qvm_ffi_registry *qvm_runtime_ffi(qvm_runtime *rt) {
+    return rt ? rt->ffi : NULL;
 }
 
 static uint32_t insn_size(const qvm_instruction *ins) {
@@ -64,6 +80,7 @@ static uint32_t insn_size(const qvm_instruction *ins) {
         case QVM_OP_JMP_IF: case QVM_OP_JMP_IF_NOT:
             return 9;
         case QVM_OP_CALL:
+        case QVM_OP_CALL_NATIVE:
             return 9u + ins->arg_count;
         default:
             return 4;
@@ -169,6 +186,54 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
                 rt->call_stack[rt->call_depth] = new_frame;
                 rt->call_depth++;
                 rt->pc = func->bytecode_offset;
+                break;
+            }
+            case QVM_OP_CALL_NATIVE: {
+                if (!rt->ffi || ins.imm32 >= rt->ffi->count) {
+                    qvm_instruction_free(&ins);
+                    return QVM_ERR_INVALID_BYTECODE;
+                }
+                const qvm_native_function *native = &rt->ffi->functions[ins.imm32];
+                if (ins.arg_count != native->arg_count) {
+                    qvm_instruction_free(&ins);
+                    return QVM_ERR_INVALID_ARGUMENT;
+                }
+                
+                qvm_value *args = NULL;
+                if (ins.arg_count > 0) {
+                    args = (qvm_value *)malloc(ins.arg_count * sizeof(qvm_value));
+                    if (!args) {
+                        qvm_instruction_free(&ins);
+                        return QVM_ERR_OUT_OF_MEMORY;
+                    }
+                    for (uint16_t i = 0; i < ins.arg_count; ++i) {
+                        err = qvm_register_read(frame, ins.args[i], &args[i]);
+                        if (err != QVM_OK) {
+                            free(args);
+                            qvm_instruction_free(&ins);
+                            return err;
+                        }
+                    }
+                }
+                
+                qvm_value result = {0};
+                err = native->fn(frame, args, ins.arg_count, &result);
+                free(args);
+                
+                if (err != QVM_OK) {
+                    qvm_instruction_free(&ins);
+                    return err;
+                }
+                
+                if (native->return_type != QVM_TYPE_VOID) {
+                    err = qvm_register_write(frame, ins.dst, result);
+                    if (err != QVM_OK) {
+                        qvm_instruction_free(&ins);
+                        return err;
+                    }
+                }
+                
+                rt->pc += size;
                 break;
             }
             case QVM_OP_RETURN: {

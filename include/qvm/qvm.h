@@ -4,6 +4,7 @@
 #include "qvm/config.h"
 #include "qvm/context.h"
 #include "qvm/error.h"
+#include "qvm/ffi.h"
 #include "qvm/frames.h"
 #include "qvm/gcq.h"
 #include "qvm/lifecycle.h"

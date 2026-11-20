@@ -24,6 +24,7 @@ add_library(qvm_core STATIC
     src/loader/loader.c
     src/verifier/verifier.c
     src/string/string.c
+    src/ffi/ffi.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
@@ -62,6 +63,10 @@ add_test(NAME type_table COMMAND test_type_table)
 add_executable(test_string tests/string/test_string.c)
 target_link_libraries(test_string qvm_core)
 add_test(NAME string COMMAND test_string)
+
+add_executable(test_ffi tests/ffi/test_ffi.c)
+target_link_libraries(test_ffi qvm_core)
+add_test(NAME ffi COMMAND test_ffi)
 
 add_executable(test_gcq tests/memory/test_gcq.c)
 target_link_libraries(test_gcq qvm_core)

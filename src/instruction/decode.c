@@ -97,6 +97,7 @@ qvm_error qvm_instruction_decode(const uint8_t *bytes, uint32_t len, qvm_instruc
             return decode_jmp_cond(out, bytes, len);
 
         case QVM_OP_CALL:
+        case QVM_OP_CALL_NATIVE:
             return decode_call(out, bytes, len);
 
         default:

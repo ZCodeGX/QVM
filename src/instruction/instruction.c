@@ -30,7 +30,8 @@ static const char *const opcode_names[] = {
     [QVM_OP_STR_LEN]     = "STR_LEN",
     [QVM_OP_STR_CHAR_AT] = "STR_CHAR_AT",
     [QVM_OP_STR_SLICE]   = "STR_SLICE",
-    [QVM_OP_STR_CMP]     = "STR_CMP"
+    [QVM_OP_STR_CMP]     = "STR_CMP",
+    [QVM_OP_CALL_NATIVE] = "CALL_NATIVE"
 };
 
 const char *qvm_opcode_name(qvm_opcode op) {
@@ -123,6 +124,7 @@ static qvm_error validate_shape(const qvm_instruction *ins, const qvm_frame *fra
             break;
 
         case QVM_OP_CALL:
+        case QVM_OP_CALL_NATIVE:
             if (!check_reg(frame, ins->dst, 0)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src1, 0)) return QVM_ERR_INVALID_ARGUMENT;
             if (!check_reg(frame, ins->src2, 0)) return QVM_ERR_INVALID_ARGUMENT;
@@ -144,7 +146,7 @@ static qvm_error validate_shape(const qvm_instruction *ins, const qvm_frame *fra
             return QVM_ERR_INVALID_BYTECODE;
     }
 
-    if (ins->opcode != QVM_OP_CALL && ins->arg_count != 0) {
+    if (ins->opcode != QVM_OP_CALL && ins->opcode != QVM_OP_CALL_NATIVE && ins->arg_count != 0) {
         return QVM_ERR_INVALID_ARGUMENT;
     }
 

@@ -2,6 +2,7 @@
 #include "qvm/instruction.h"
 #include "qvm/registers.h"
 #include "qvm/string.h"
+#include "qvm/ffi.h"
 
 static qvm_error exec_arith(const qvm_instruction *ins, qvm_frame *frame) {
     qvm_value a, b, result = {0};
@@ -334,6 +335,8 @@ qvm_error qvm_instruction_execute(const qvm_instruction *ins, qvm_frame *frame) 
             return exec_str_slice(ins, frame);
         case QVM_OP_STR_CMP:
             return exec_str_cmp(ins, frame);
+        case QVM_OP_CALL_NATIVE:
+            return QVM_ERR_INTERNAL;
         case QVM_OP_LOAD_CONST:
         case QVM_OP_JMP: case QVM_OP_JMP_IF: case QVM_OP_JMP_IF_NOT:
         case QVM_OP_CALL: case QVM_OP_RETURN: case QVM_OP_RETURN_VOID:
