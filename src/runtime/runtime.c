@@ -19,8 +19,13 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
     const qvm_limits *limits = qvm_context_limits(ctx);
     rt->max_call_depth = (limits && limits->max_call_depth) ? limits->max_call_depth : 256;
 
-    rt->call_stack = (qvm_frame **)calloc(rt->max_call_depth, sizeof(qvm_frame *));
-    if (!rt->call_stack) {
+    rt->call_stack          = (qvm_frame **)calloc(rt->max_call_depth, sizeof(qvm_frame *));
+    rt->return_addresses    = (uint32_t *)calloc(rt->max_call_depth, sizeof(uint32_t));
+    rt->return_destinations = (uint32_t *)calloc(rt->max_call_depth, sizeof(uint32_t));
+    if (!rt->call_stack || !rt->return_addresses || !rt->return_destinations) {
+        free(rt->call_stack);
+        free(rt->return_addresses);
+        free(rt->return_destinations);
         free(rt);
         if (err) *err = QVM_ERR_OUT_OF_MEMORY;
         return NULL;
@@ -34,6 +39,8 @@ void qvm_runtime_destroy(qvm_runtime *rt) {
         qvm_frame_destroy(rt->call_stack[i]);
     }
     free(rt->call_stack);
+    free(rt->return_addresses);
+    free(rt->return_destinations);
     free(rt);
 }
 
@@ -114,22 +121,85 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
                 }
                 break;
             }
-            case QVM_OP_RETURN:
+            case QVM_OP_CALL: {
+                if (ins.imm32 >= rt->module->function_count) {
+                    qvm_instruction_free(&ins);
+                    return QVM_ERR_INVALID_BYTECODE;
+                }
+                if (rt->call_depth >= rt->max_call_depth) {
+                    qvm_instruction_free(&ins);
+                    return QVM_ERR_CALL_DEPTH_EXCEEDED;
+                }
+                
+                qvm_function *func = &rt->module->functions[ins.imm32];
+                if (ins.arg_count != func->param_count) {
+                    qvm_instruction_free(&ins);
+                    return QVM_ERR_INVALID_BYTECODE;
+                }
+                
+                qvm_frame *new_frame = qvm_frame_create(
+                    ins.imm32,
+                    func->local_count,
+                    func->local_types,
+                    frame,
+                    &err);
+                if (!new_frame) {
+                    qvm_instruction_free(&ins);
+                    return err;
+                }
+                
+                for (uint16_t i = 0; i < func->param_count; ++i) {
+                    qvm_value arg;
+                    err = qvm_register_read(frame, ins.args[i], &arg);
+                    if (err != QVM_OK) {
+                        qvm_frame_destroy(new_frame);
+                        qvm_instruction_free(&ins);
+                        return err;
+                    }
+                    err = qvm_register_write(new_frame, i, arg);
+                    if (err != QVM_OK) {
+                        qvm_frame_destroy(new_frame);
+                        qvm_instruction_free(&ins);
+                        return err;
+                    }
+                }
+                
+                rt->return_addresses[rt->call_depth]    = rt->pc + size;
+                rt->return_destinations[rt->call_depth] = ins.dst;
+                rt->call_stack[rt->call_depth] = new_frame;
+                rt->call_depth++;
+                rt->pc = func->bytecode_offset;
+                break;
+            }
+            case QVM_OP_RETURN: {
                 err = qvm_register_read(frame, ins.src1, &rt->return_value);
                 if (err != QVM_OK) { qvm_instruction_free(&ins); return err; }
                 rt->has_return = 1;
                 qvm_instruction_free(&ins);
+                
                 if (rt->call_depth == 1) return QVM_OK;
+                
+                uint32_t return_pc  = rt->return_addresses[rt->call_depth - 1];
+                uint32_t return_dst = rt->return_destinations[rt->call_depth - 1];
                 qvm_frame_destroy(frame);
                 rt->call_stack[--rt->call_depth] = NULL;
-                return QVM_OK;
-
+                
+                qvm_frame *caller = rt->call_stack[rt->call_depth - 1];
+                err = qvm_register_write(caller, return_dst, rt->return_value);
+                if (err != QVM_OK) return err;
+                
+                rt->pc = return_pc;
+                break;
+            }
             case QVM_OP_RETURN_VOID:
                 qvm_instruction_free(&ins);
                 if (rt->call_depth == 1) return QVM_OK;
+                
+                uint32_t return_pc = rt->return_addresses[rt->call_depth - 1];
                 qvm_frame_destroy(frame);
                 rt->call_stack[--rt->call_depth] = NULL;
-                return QVM_OK;
+                rt->pc = return_pc;
+                break;
 
             default:
                 err = qvm_instruction_execute(&ins, frame);

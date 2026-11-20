@@ -17,6 +17,8 @@ typedef struct qvm_runtime {
     qvm_context *ctx;
     qvm_module  *module;
     qvm_frame  **call_stack;
+    uint32_t    *return_addresses;
+    uint32_t    *return_destinations;
     uint32_t     call_depth;
     uint32_t     max_call_depth;
     uint32_t     pc;

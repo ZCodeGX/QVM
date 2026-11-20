@@ -4,8 +4,53 @@
 #include "qvm/loader.h"
 #include "qvm/verifier.h"
 
+static uint16_t rd16(const uint8_t *b) {
+    return (uint16_t)(b[0] | (b[1] << 8));
+}
+
 static uint32_t rd32(const uint8_t *b) {
     return (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+}
+
+static qvm_error parse_functions(const uint8_t *data, uint32_t size, qvm_module *module) {
+    uint32_t offset = 0;
+    uint32_t count = 0;
+    
+    while (offset + 10 <= size) {
+        uint16_t local_count = rd16(data + offset + 6);
+        uint32_t func_size = 10 + local_count * 2;
+        if (offset + func_size > size) return QVM_ERR_INVALID_BYTECODE;
+        offset += func_size;
+        count++;
+    }
+    
+    if (offset != size) return QVM_ERR_INVALID_BYTECODE;
+    
+    if (count > 0) {
+        module->functions = (qvm_function *)calloc(count, sizeof(qvm_function));
+        if (!module->functions) return QVM_ERR_OUT_OF_MEMORY;
+        
+        offset = 0;
+        for (uint32_t i = 0; i < count; ++i) {
+            qvm_function *f = &module->functions[i];
+            f->bytecode_offset = rd32(data + offset);
+            f->param_count     = rd16(data + offset + 4);
+            f->local_count     = rd16(data + offset + 6);
+            f->return_type     = rd16(data + offset + 8);
+            
+            f->local_types = (qvm_type_id_t *)malloc(f->local_count * sizeof(qvm_type_id_t));
+            if (!f->local_types) return QVM_ERR_OUT_OF_MEMORY;
+            
+            for (uint16_t j = 0; j < f->local_count; ++j) {
+                f->local_types[j] = rd16(data + offset + 10 + j * 2);
+            }
+            
+            offset += 10 + f->local_count * 2;
+        }
+    }
+    
+    module->function_count = count;
+    return QVM_OK;
 }
 
 static qvm_error parse_sections(const uint8_t *data, uint32_t size, qvm_module *module) {
@@ -33,7 +78,8 @@ static qvm_error parse_sections(const uint8_t *data, uint32_t size, qvm_module *
                 module->constant_count  = n;
             }
         } else if (section_type == QCB_SECTION_FUNCTIONS) {
-            module->function_count = section_size / 8u;
+            qvm_error err = parse_functions(data + offset, section_size, module);
+            if (err != QVM_OK) return err;
         }
 
         offset += section_size;
@@ -131,6 +177,12 @@ qvm_module *qvm_module_load_from_file(const char *path, qvm_context *ctx, qvm_er
 
 void qvm_module_destroy(qvm_module *module) {
     if (!module) return;
+    if (module->functions) {
+        for (uint32_t i = 0; i < module->function_count; ++i) {
+            free(module->functions[i].local_types);
+        }
+        free(module->functions);
+    }
     free(module->owned_constants);
     free(module->owned_data);
     free(module);

@@ -92,6 +92,11 @@ qvm_error qvm_verify_module(const qvm_module *module, const qvm_context *ctx, qv
                 qvm_instruction_free(&ins);
                 return QVM_ERR_INVALID_BYTECODE;
             }
+            if (module->functions && ins.arg_count != module->functions[ins.imm32].param_count) {
+                set_result(result, QVM_ERR_INVALID_BYTECODE, pc, "argument count mismatch");
+                qvm_instruction_free(&ins);
+                return QVM_ERR_INVALID_BYTECODE;
+            }
         }
 
         if (limits && limits->max_bytecode_bytes > 0 && max_pc > limits->max_bytecode_bytes) {
