@@ -65,5 +65,9 @@ add_executable(test_verifier tests/verifier/test_verifier.c)
 target_link_libraries(test_verifier qvm_core)
 add_test(NAME verifier COMMAND test_verifier)
 
+add_executable(test_call_return tests/runtime/test_call_return.c)
+target_link_libraries(test_call_return qvm_core)
+add_test(NAME call_return COMMAND test_call_return)
+
 add_executable(demo examples/demo.c)
 target_link_libraries(demo qvm_core)
