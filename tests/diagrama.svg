@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 980" width="820" height="980" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#374151"/>
+    </marker>
+    <marker id="arrow-v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#7c3aed"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <style>
+    .shape { fill: #ffffff; filter: url(#shadow); }
+    .qvm { stroke: #0d9488; stroke-width: 2; }
+    .gcq { stroke: #7c3aed; stroke-width: 2; }
+    .err { stroke: #ef4444; stroke-width: 2; }
+    .dark { stroke: #374151; stroke-width: 2; }
+    .t-main { fill: #111827; font-size: 13px; font-weight: 600; text-anchor: middle; }
+    .t-sub { fill: #6b7280; font-size: 11px; font-weight: 400; text-anchor: middle; }
+    .t-lbl { fill: #374151; font-size: 11px; font-weight: 600; text-anchor: middle; }
+    .lane-qvm { fill: #0d9488; opacity: 0.06; }
+    .lane-gcq { fill: #7c3aed; opacity: 0.06; }
+    .lane-title-qvm { fill: #0d9488; font-size: 14px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+    .lane-title-gcq { fill: #7c3aed; font-size: 14px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
+    .link { fill: none; stroke: #374151; stroke-width: 1.5; stroke-dasharray: 5 3; }
+    .flow { fill: none; stroke: #374151; stroke-width: 1.5; marker-end: url(#arrow); }
+    .flow-v { fill: none; stroke: #7c3aed; stroke-width: 1.5; marker-end: url(#arrow-v); }
+  </style>
+
+  <!-- Carriles de fondo -->
+  <rect x="60" y="60" width="380" height="880" rx="12" class="lane-qvm"/>
+  <rect x="460" y="60" width="320" height="880" rx="12" class="lane-gcq"/>
+
+  <!-- Títulos de carril -->
+  <text x="250" y="90" class="lane-title-qvm">QVM (Ejecución)</text>
+  <text x="620" y="90" class="lane-title-gcq">GCQ (Memoria)</text>
+
+  <!-- INICIO -->
+  <ellipse cx="250" cy="130" rx="55" ry="22" class="shape dark"/>
+  <text x="250" y="135" class="t-main">INICIO</text>
+  <path d="M 250 152 L 250 180" class="flow"/>
+
+  <!-- Cargar módulo -->
+  <rect x="150" y="180" width="200" height="46" rx="8" class="shape qvm"/>
+  <text x="250" y="200" class="t-main">Cargar módulo .qcb</text>
+  <text x="250" y="216" class="t-sub">Loader</text>
+  <path d="M 250 226 L 250 254" class="flow"/>
+
+  <!-- Verificación -->
+  <polygon points="250,254 330,284 250,314 170,284" class="shape qvm"/>
+  <text x="250" y="280" class="t-main">¿Verificación</text>
+  <text x="250" y="296" class="t-main">OK?</text>
+
+  <!-- No: Rechazado -->
+  <path d="M 170 284 L 110 284" class="flow"/>
+  <text x="140" y="276" class="t-lbl">No</text>
+  <rect x="60" y="266" width="90" height="36" rx="6" class="shape err"/>
+  <text x="105" y="288" class="t-main" style="fill:#ef4444;font-size:12px;">Rechazado</text>
+
+  <!-- Sí: Crear contexto -->
+  <path d="M 250 314 L 250 344" class="flow"/>
+  <text x="262" y="332" class="t-lbl">Sí</text>
+
+  <rect x="150" y="344" width="200" height="46" rx="8" class="shape qvm"/>
+  <text x="250" y="364" class="t-main">Crear Contexto</text>
+  <text x="250" y="380" class="t-sub">Config + TypeTable</text>
+
+  <!-- Conexión al GCQ: inicializar -->
+  <path d="M 350 367 L 480 367" class="link"/>
+  <rect x="480" y="344" width="280" height="46" rx="8" class="shape gcq"/>
+  <text x="620" y="364" class="t-main">Inicializar GCQ</text>
+  <text x="620" y="380" class="t-sub">Región raíz + Cuotas</text>
+  <path d="M 620 390 L 620 420" class="flow-v"/>
+
+  <!-- Capas GCQ -->
+  <rect x="480" y="420" width="280" height="100" rx="8" class="shape gcq"/>
+  <text x="620" y="440" class="t-main">Capas del GCQ</text>
+  <text x="620" y="460" class="t-sub">Handle → Region</text>
+  <text x="620" y="476" class="t-sub">Allocator → Policy</text>
+  <text x="620" y="498" class="t-sub" style="fill:#7c3aed;">Cuotas: memoria/tiempo/estructura</text>
+  <text x="620" y="512" class="t-sub" style="fill:#7c3aed;">Rate limiting + TTL</text>
+
+  <!-- Crear runtime -->
+  <path d="M 250 390 L 250 540" class="flow"/>
+  <rect x="150" y="540" width="200" height="46" rx="8" class="shape qvm"/>
+  <text x="250" y="560" class="t-main">Crear Runtime</text>
+  <text x="250" y="576" class="t-sub">Call Stack + FFI</text>
+
+  <!-- Conexión: cada frame tiene región GCQ -->
+  <path d="M 350 563 L 480 563" class="link"/>
+  <rect x="480" y="540" width="280" height="46" rx="8" class="shape gcq"/>
+  <text x="620" y="560" class="t-main">Región por Frame</text>
+  <text x="620" y="576" class="t-sub">Ownership + Move</text>
+
+  <!-- Bucle de ejecución -->
+  <path d="M 250 586 L 250 616" class="flow"/>
+  <rect x="150" y="616" width="200" height="46" rx="8" class="shape qvm"/>
+  <text x="250" y="636" class="t-main">Fetch-Decode-Execute</text>
+  <text x="250" y="652" class="t-sub">Bucle principal</text>
+
+  <!-- Decisión: ¿operación de memoria? -->
+  <path d="M 250 662 L 250 692" class="flow"/>
+  <polygon points="250,692 330,722 250,752 170,722" class="shape qvm"/>
+  <text x="250" y="718" class="t-main">¿Op. de</text>
+  <text x="250" y="734" class="t-main">memoria?</text>
+
+  <!-- Sí: GCQ gestiona -->
+  <path d="M 330 722 L 480 722" class="flow"/>
+  <text x="405" y="714" class="t-lbl">Sí</text>
+
+  <rect x="480" y="692" width="280" height="60" rx="8" class="shape gcq"/>
+  <text x="620" y="712" class="t-main">Verificar Handle + Cuotas</text>
+  <text x="620" y="728" class="t-sub">Generación · Bounds · Rate</text>
+  <text x="620" y="744" class="t-sub" style="fill:#7c3aed;">Acceso vía Lease (3 niveles)</text>
+
+  <!-- Decisión GCQ: ¿error? -->
+  <path d="M 620 752 L 620 782" class="flow-v"/>
+  <polygon points="620,782 690,808 620,834 550,808" class="shape gcq"/>
+  <text x="620" y="805" class="t-main">¿Error?</text>
+  <text x="620" y="820" class="t-sub" style="font-size:10px;">UAF · OOB · Cuota</text>
+
+  <!-- Sí error: ABORT -->
+  <path d="M 690 808 L 760 808" class="flow-v"/>
+  <text x="725" y="800" class="t-lbl">Sí</text>
+  <rect x="760" y="790" width="60" height="36" rx="6" class="shape err"/>
+  <text x="790" y="812" class="t-main" style="fill:#ef4444;font-size:12px;">ABORT</text>
+
+  <!-- No error: OK, vuelve al bucle -->
+  <path d="M 620 834 L 620 870 L 250 870 L 250 662" class="link"/>
+  <text x="435" y="862" class="t-lbl">No · OK</text>
+
+  <!-- No es op. memoria: continúa -->
+  <path d="M 170 722 L 110 722" class="flow"/>
+  <text x="140" y="714" class="t-lbl">No</text>
+
+  <!-- Termina ejecución -->
+  <path d="M 250 752 L 250 900" class="flow"/>
+  <rect x="150" y="900" width="200" height="46" rx="8" class="shape qvm"/>
+  <text x="250" y="920" class="t-main">Destruir Frames</text>
+  <text x="250" y="936" class="t-sub">Pop call stack</text>
+
+  <!-- Conexión: GCQ libera regiones determinista -->
+  <path d="M 350 923 L 480 923" class="link"/>
+  <rect x="480" y="900" width="280" height="46" rx="8" class="shape gcq"/>
+  <text x="620" y="920" class="t-main">Liberar Regiones</text>
+  <text x="620" y="936" class="t-sub">Determinista · Generaciones++</text>
+
+  <!-- FIN -->
+  <path d="M 250 946 L 250 966" class="flow"/>
+  <ellipse cx="250" cy="966" rx="55" ry="22" class="shape err"/>
+  <text x="250" y="971" class="t-main" style="fill:#ef4444;">FIN</text>
+
+  <!-- Leyenda -->
+  <g transform="translate(60, 990)">
+    <rect x="0" y="0" width="14" height="14" rx="3" fill="#ffffff" stroke="#0d9488" stroke-width="2"/>
+    <text x="20" y="11" style="font-size:11px; fill:#374151;">QVM</text>
+    <rect x="60" y="0" width="14" height="14" rx="3" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="80" y="11" style="font-size:11px; fill:#374151;">GCQ</text>
+    <rect x="120" y="0" width="14" height="14" rx="3" fill="#ffffff" stroke="#ef4444" stroke-width="2"/>
+    <text x="140" y="11" style="font-size:11px; fill:#374151;">Error / Abort</text>
+    <line x1="220" y1="7" x2="250" y2="7" stroke="#374151" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="256" y="11" style="font-size:11px; fill:#374151;">Integración</text>
+  </g>
+</svg>

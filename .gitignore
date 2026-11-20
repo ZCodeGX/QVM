@@ -1,2 +1,25 @@
-tests/
+# Artefactos de compilación
 build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+Makefile
+
+# Binarios y objetos
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Cachés y sistemas operativos
+*.log
+.DS_Store
+Thumbs.db

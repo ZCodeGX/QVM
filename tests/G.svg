@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800" style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Flecha limpia y moderna -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#374151"/>
+    </marker>
+    
+    <!-- Sombra sutil para dar profundidad sin ensuciar -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Estilos globales -->
+  <style>
+    .shape { fill: #ffffff; filter: url(#shadow); }
+    .stroke-teal { stroke: #0d9488; stroke-width: 2; }
+    .stroke-dark { stroke: #374151; stroke-width: 2; }
+    .stroke-red { stroke: #ef4444; stroke-width: 2; }
+    .text-main { fill: #111827; font-size: 14px; font-weight: 600; text-anchor: middle; }
+    .text-sub { fill: #6b7280; font-size: 12px; font-weight: 400; text-anchor: middle; }
+    .text-label { fill: #374151; font-size: 12px; font-weight: 600; text-anchor: middle; }
+    .path { fill: none; stroke: #374151; stroke-width: 1.5; marker-end: url(#arrow); }
+  </style>
+
+  <!-- 1. INICIO -->
+  <ellipse cx="300" cy="40" rx="60" ry="24" class="shape stroke-dark"/>
+  <text x="300" y="45" class="text-main">INICIO</text>
+
+  <path d="M 300 64 L 300 90" class="path"/>
+
+  <!-- 2. CARGAR MÓDULO -->
+  <rect x="200" y="90" width="200" height="50" rx="8" class="shape stroke-teal"/>
+  <text x="300" y="112" class="text-main">Cargar módulo .qcb</text>
+  <text x="300" y="130" class="text-sub">Fase: Loader</text>
+
+  <path d="M 300 140 L 300 170" class="path"/>
+
+  <!-- 3. DECISIÓN: VERIFICACIÓN -->
+  <polygon points="300,170 390,210 300,250 210,210" class="shape stroke-teal"/>
+  <text x="300" y="205" class="text-main">¿Verificación</text>
+  <text x="300" y="222" class="text-main">OK?</text>
+
+  <!-- Rama NO (Rechazo) -->
+  <path d="M 390 210 L 440 210" class="path"/>
+  <text x="415" y="202" class="text-label">No</text>
+  <rect x="460" y="190" width="100" height="40" rx="6" class="shape stroke-red"/>
+  <text x="510" y="215" class="text-main" style="font-size:13px; fill:#ef4444;">Rechazado</text>
+  <path d="M 510 230 L 510 740 L 360 740" class="path" style="marker-end:none; stroke-dasharray: 4;"/>
+
+  <!-- Rama SI (Éxito) -->
+  <path d="M 300 250 L 300 290" class="path"/>
+  <text x="315" y="275" class="text-label">Sí</text>
+
+  <!-- 4. CREAR RUNTIME -->
+  <rect x="200" y="290" width="200" height="50" rx="8" class="shape stroke-teal"/>
+  <text x="300" y="312" class="text-main">Crear Runtime</text>
+  <text x="300" y="330" class="text-sub">Contexto + GCQ + Frames</text>
+
+  <path d="M 300 340 L 300 380" class="path"/>
+
+  <!-- 5. BUCLE DE EJECUCIÓN -->
+  <rect x="200" y="380" width="200" height="50" rx="8" class="shape stroke-teal"/>
+  <text x="300" y="402" class="text-main">Fetch - Decode - Execute</text>
+  <text x="300" y="420" class="text-sub">Bucle principal de la VM</text>
+
+  <path d="M 300 430 L 300 470" class="path"/>
+
+  <!-- 6. DECISIÓN: ERROR DE MEMORIA -->
+  <polygon points="300,470 390,510 300,550 210,510" class="shape stroke-teal"/>
+  <text x="300" y="505" class="text-main">¿Error de</text>
+  <text x="300" y="522" class="text-main">memoria / Cuota?</text>
+
+  <!-- Rama SI (Abort) -->
+  <path d="M 390 510 L 440 510" class="path"/>
+  <text x="415" y="502" class="text-label">Sí</text>
+  <rect x="460" y="490" width="100" height="40" rx="6" class="shape stroke-red"/>
+  <text x="510" y="510" class="text-main" style="font-size:13px; fill:#ef4444;">ABORT</text>
+  <text x="510" y="525" class="text-sub" style="font-size:10px;">(Nunca UB)</text>
+  <path d="M 510 530 L 510 740 L 360 740" class="path" style="marker-end:none; stroke-dasharray: 4;"/>
+
+  <!-- Rama NO (Continuar) -->
+  <path d="M 300 550 L 300 590" class="path"/>
+  <text x="315" y="575" class="text-label">No</text>
+
+  <!-- 7. RETORNO Y LIMPIEZA -->
+  <rect x="200" y="590" width="200" height="50" rx="8" class="shape stroke-teal"/>
+  <text x="300" y="612" class="text-main">Retornar resultado</text>
+  <text x="300" y="630" class="text-sub">Destrucción determinista</text>
+
+  <path d="M 300 640 L 300 680" class="path"/>
+
+  <!-- 8. FIN -->
+  <ellipse cx="300" cy="720" rx="60" ry="24" class="shape stroke-red"/>
+  <text x="300" y="725" class="text-main" style="fill:#ef4444;">FIN</text>
+
+</svg>
