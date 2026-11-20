@@ -18,6 +18,7 @@ add_library(qvm_core STATIC
     src/instruction/instruction.c
     src/instruction/decode.c
     src/instruction/execute.c
+    src/memory/gcq/gcq.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
@@ -44,3 +45,7 @@ add_test(NAME instruction COMMAND test_instruction)
 add_executable(test_decode tests/instruction/test_decode.c)
 target_link_libraries(test_decode qvm_core)
 add_test(NAME decode COMMAND test_decode)
+
+add_executable(test_gcq tests/memory/test_gcq.c)
+target_link_libraries(test_gcq qvm_core)
+add_test(NAME gcq COMMAND test_gcq)

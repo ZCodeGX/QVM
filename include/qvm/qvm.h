@@ -5,6 +5,7 @@
 #include "qvm/context.h"
 #include "qvm/error.h"
 #include "qvm/frames.h"
+#include "qvm/gcq.h"
 #include "qvm/lifecycle.h"
 #include "qvm/limits.h"
 #include "qvm/registers.h"
@@ -21,4 +22,4 @@ const char *qvm_version(void);
 }
 #endif
 
-#endif /* QVM_H */
+#endif
