@@ -59,3 +59,6 @@ add_test(NAME runtime COMMAND test_runtime)
 add_executable(test_loader tests/loader/test_loader.c)
 target_link_libraries(test_loader qvm_core)
 add_test(NAME loader COMMAND test_loader)
+
+add_executable(demo examples/demo.c)
+target_link_libraries(demo qvm_core)

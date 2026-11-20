@@ -14,12 +14,14 @@ extern "C" {
 #endif
 
 typedef struct qvm_runtime {
-    qvm_context     *ctx;
-    qvm_module      *module;
-    qvm_frame      **call_stack;
-    uint32_t         call_depth;
-    uint32_t         max_call_depth;
-    uint32_t         pc;
+    qvm_context *ctx;
+    qvm_module  *module;
+    qvm_frame  **call_stack;
+    uint32_t     call_depth;
+    uint32_t     max_call_depth;
+    uint32_t     pc;
+    qvm_value    return_value;
+    uint8_t      has_return;
 } qvm_runtime;
 
 qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error *err);

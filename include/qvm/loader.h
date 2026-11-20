@@ -17,6 +17,8 @@ typedef struct qvm_module {
     const qvm_value *constants;
     uint32_t         constant_count;
     uint32_t         function_count;
+    uint8_t         *owned_data;
+    qvm_value       *owned_constants;
 } qvm_module;
 
 qvm_module *qvm_module_load_from_file(const char *path, qvm_context *ctx, qvm_error *err);
