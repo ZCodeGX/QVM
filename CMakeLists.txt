@@ -21,6 +21,7 @@ add_library(qvm_core STATIC
     src/memory/gcq/gcq.c
     src/runtime/runtime.c
     src/loader/loader.c
+    src/verifier/verifier.c
 )
 
 target_include_directories(qvm_core PUBLIC include)
@@ -59,6 +60,10 @@ add_test(NAME runtime COMMAND test_runtime)
 add_executable(test_loader tests/loader/test_loader.c)
 target_link_libraries(test_loader qvm_core)
 add_test(NAME loader COMMAND test_loader)
+
+add_executable(test_verifier tests/verifier/test_verifier.c)
+target_link_libraries(test_verifier qvm_core)
+add_test(NAME verifier COMMAND test_verifier)
 
 add_executable(demo examples/demo.c)
 target_link_libraries(demo qvm_core)

@@ -13,6 +13,7 @@
 #include "qvm/runtime.h"
 #include "qvm/types.h"
 #include "qvm/value.h"
+#include "qvm/verifier.h"
 
 #ifdef __cplusplus
 extern "C" {
