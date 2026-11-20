@@ -1,0 +1,40 @@
+#ifndef QVM_RUNTIME_H
+#define QVM_RUNTIME_H
+
+#include <stdint.h>
+#include "qvm/error.h"
+#include "qvm/context.h"
+#include "qvm/frames.h"
+#include "qvm/instruction.h"
+#include "qvm/value.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct qvm_module {
+    const uint8_t   *bytecode;
+    uint32_t         bytecode_size;
+    const qvm_value *constants;
+    uint32_t         constant_count;
+    uint32_t         function_count;
+} qvm_module;
+
+typedef struct qvm_runtime {
+    qvm_context     *ctx;
+    qvm_module      *module;
+    qvm_frame      **call_stack;
+    uint32_t         call_depth;
+    uint32_t         max_call_depth;
+    uint32_t         pc;
+} qvm_runtime;
+
+qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error *err);
+void         qvm_runtime_destroy(qvm_runtime *rt);
+qvm_error    qvm_runtime_execute(qvm_runtime *rt);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
