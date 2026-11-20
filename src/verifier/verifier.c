@@ -105,6 +105,9 @@ qvm_error qvm_verify_module(const qvm_module *module, const qvm_context *ctx, qv
             }
         }
 
+        // CALL_NATIVE no se valida aquí porque las funciones nativas están en el FFI registry
+        // La validación se hace en runtime.c cuando se ejecuta la instrucción
+
         if (limits && limits->max_bytecode_bytes > 0 && max_pc > limits->max_bytecode_bytes) {
             set_result(result, QVM_ERR_LIMIT_EXCEEDED, 0, "bytecode exceeds limit");
             qvm_instruction_free(&ins);

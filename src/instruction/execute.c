@@ -179,18 +179,19 @@ static qvm_error exec_cast(const qvm_instruction *ins, qvm_frame *frame) {
 }
 
 static qvm_string *read_string(qvm_frame *frame, uint32_t reg, qvm_error *err) {
-    uint64_t lo, hi;
-    *err = qvm_register_read_pair(frame, reg, &lo, &hi);
+    qvm_value v;
+    *err = qvm_register_read(frame, reg, &v);
     if (*err != QVM_OK) return NULL;
     qvm_string *s;
-    memcpy(&s, &lo, sizeof(s));
+    memcpy(&s, &v.payload, sizeof(qvm_string *));
     return s;
 }
 
 static qvm_error write_string(qvm_frame *frame, uint32_t reg, qvm_string *s) {
-    uint64_t lo = 0;
-    memcpy(&lo, &s, sizeof(s));
-    return qvm_register_write_pair(frame, reg, lo, 0);
+    qvm_value v = {0};
+    v.type_id = QVM_TYPE_STRING;
+    memcpy(&v.payload, &s, sizeof(qvm_string *));
+    return qvm_register_write(frame, reg, v);
 }
 
 static qvm_error exec_str_concat(const qvm_instruction *ins, qvm_frame *frame) {

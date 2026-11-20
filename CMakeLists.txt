@@ -96,3 +96,6 @@ target_link_libraries(demo_ffi qvm_core)
 
 add_executable(demo_strings examples/demo_strings.c)
 target_link_libraries(demo_strings qvm_core)
+
+add_executable(demo_strings_native examples/demo_strings_native.c)
+target_link_libraries(demo_strings_native qvm_core)
