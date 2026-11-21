@@ -1,0 +1,26 @@
+name: QVM CI Baseline
+on:
+  push:
+    branches: [ "release/0.3.1-beta", "main" ]
+  pull_request:
+    branches: [ "release/0.3.1-beta", "main" ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake build-essential clang
+    - name: Configure CMake
+      run: |
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          export CC=clang CXX=clang++
+        fi
+        cmake -S . -B build -DCMAKE_C_STANDARD=17 -DCMAKE_C_FLAGS="-Wall -Wextra -Wpedantic -Werror" -DCMAKE_BUILD_TYPE=Release
+    - name: Build
+      run: cmake --build build -j$(nproc)
+    - name: Test
+      run: ctest --test-dir build --output-on-failure

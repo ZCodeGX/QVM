@@ -1,6 +1,6 @@
 # Arquitectura de QVM
 
-> Documento técnico de referencia. Describe el estado del código en `HEAD = 82e596a` (`v0.1.0-dev`).
+> Documento técnico de referencia. Describe el estado del código en `HEAD = 17cd281` (`v0.1.0-dev`).
 > Las citas `archivo:línea` permiten contrastar cada afirmación con la implementación.
 
 ## 1. Alcance y modelo mental
@@ -170,7 +170,7 @@ Los dos backends JIT se detallan en [qit.md](qit.md). La elección de backend no
 
 ## 10. Estado y divergencias conocidas
 
-Documentar el código tal como está implica señalar estos puntos, confirmados en `HEAD = 82e596a`:
+Documentar el código tal como está implica señalar estos puntos, confirmados en `HEAD = 17cd281`:
 
 - [x] Los 17 tests registrados pasan con `ctest --test-dir build --output-on-failure`.
 - [x] `tests/` está versionado (17 pruebas y 2 SVG); `.gitignore` excluye solo artefactos de compilación. Ver [benchmarks.md](benchmarks.md).

@@ -44,7 +44,7 @@ Alternativamente se puede construir `qvm_module` directamente en memoria, como h
 | `qvm/ffi.h` | Llamadas nativas | `qvm_ffi_register/find`, `qvm_native_fn` |
 | `qvm/string.h` | Strings con refcount | `qvm_string_create/retain/release/concat/slice/compare` |
 | `qvm/memory.h`, `qvm/gcq.h` | QMS-Zero y GCQ | `qvm_region_*`, `qvm_ptr_read/write`, `gcq_alloc/free` |
-| `qvm/jit.h`, `qvm/qit.h` | Backends nativos | `qvm_jit_compile`, `qit_compile/execute` |
+| `qvm/jit.h`, `qvm/qit.h` | Backends nativos | `qvm_jit_compile`, `qit_compile, qit_get_entry` |
 | `qvm/error.h` | Errores | `qvm_error`, `qvm_error_name`, `qvm_error_message` |
 
 ## 3. Contexto y errores

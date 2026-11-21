@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef QVM_JIT_H
 #define QVM_JIT_H
 
@@ -13,4 +17,8 @@ typedef struct qvm_jit_code {
 qvm_jit_code *qvm_jit_compile(const uint8_t *bytecode, uint32_t size);
 void qvm_jit_destroy(qvm_jit_code *jit);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

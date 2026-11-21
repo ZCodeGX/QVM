@@ -1,144 +1,50 @@
 cmake_minimum_required(VERSION 3.16)
-project(qvm C)
+project(qvm VERSION 0.2.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
+# 1. Biblioteca Central Unificada
 add_library(qvm_core STATIC
-    src/core/types.c
-    src/core/value.c
-    src/core/error.c
-    src/core/limits.c
-    src/core/config.c
-    src/core/context.c
-    src/core/lifecycle.c
-    src/core/type_table.c
-    src/core/version.c
-    src/frames/frames.c
-    src/registers/registers.c
-    src/instruction/instruction.c
-    src/instruction/decode.c
-    src/instruction/execute.c
-    src/memory/gcq/gcq.c
-    src/runtime/runtime.c
-    src/loader/loader.c
-    src/verifier/verifier.c
-    src/string/string.c
-    src/ffi/ffi.c
+    src/core/types.c src/core/value.c src/core/error.c src/core/limits.c
+    src/core/config.c src/core/context.c src/core/lifecycle.c src/core/type_table.c
+    src/core/version.c src/frames/frames.c src/registers/registers.c
+    src/instruction/instruction.c src/instruction/decode.c src/instruction/execute.c
+    src/memory/gcq/gcq.c src/runtime/runtime.c src/runtime/runtime_fast.c
+    src/loader/loader.c src/verifier/verifier.c src/verifier/verifier_qms.c
+    src/string/string.c src/ffi/ffi.c src/jit/jit.c src/qit/qit.c
 )
-
 target_include_directories(qvm_core PUBLIC include)
 target_compile_options(qvm_core PRIVATE -Wall -Wextra -Wpedantic)
 
+# 2. Tests (CTest)
 enable_testing()
+set(QVM_TESTS
+    tests/core/test_lifecycle tests/core/test_type_table
+    tests/frames/test_frames tests/registers/test_registers
+    tests/instruction/test_instruction tests/instruction/test_decode tests/instruction/test_execute
+    tests/string/test_string tests/ffi/test_ffi tests/memory/test_gcq
+    tests/runtime/test_runtime tests/runtime/test_call_return tests/runtime/test_qms_runtime
+    tests/loader/test_loader tests/verifier/test_verifier tests/verifier/test_qms_zero
+    tests/qit/test_qit
+)
+foreach(test_target ${QVM_TESTS})
+    get_filename_component(test_name ${test_target} NAME)
+    add_executable(${test_name} ${test_target}.c)
+    target_link_libraries(${test_name} PRIVATE qvm_core)
+    add_test(NAME ${test_name} COMMAND ${test_name})
+endforeach()
 
-add_executable(test_lifecycle tests/core/test_lifecycle.c)
-target_link_libraries(test_lifecycle qvm_core)
-add_test(NAME lifecycle COMMAND test_lifecycle)
-
-add_executable(test_frames tests/frames/test_frames.c)
-target_link_libraries(test_frames qvm_core)
-add_test(NAME frames COMMAND test_frames)
-
-add_executable(test_registers tests/registers/test_registers.c)
-target_link_libraries(test_registers qvm_core)
-add_test(NAME registers COMMAND test_registers)
-
-add_executable(test_instruction tests/instruction/test_instruction.c)
-target_link_libraries(test_instruction qvm_core)
-add_test(NAME instruction COMMAND test_instruction)
-
-add_executable(test_decode tests/instruction/test_decode.c)
-target_link_libraries(test_decode qvm_core)
-add_test(NAME decode COMMAND test_decode)
-
-add_executable(test_execute tests/instruction/test_execute.c)
-target_link_libraries(test_execute qvm_core)
-add_test(NAME execute COMMAND test_execute)
-
-add_executable(test_type_table tests/core/test_type_table.c)
-target_link_libraries(test_type_table qvm_core)
-add_test(NAME type_table COMMAND test_type_table)
-
-add_executable(test_string tests/string/test_string.c)
-target_link_libraries(test_string qvm_core)
-add_test(NAME string COMMAND test_string)
-
-add_executable(test_ffi tests/ffi/test_ffi.c)
-target_link_libraries(test_ffi qvm_core)
-add_test(NAME ffi COMMAND test_ffi)
-
-add_executable(test_gcq tests/memory/test_gcq.c)
-target_link_libraries(test_gcq qvm_core)
-add_test(NAME gcq COMMAND test_gcq)
-
-add_executable(test_runtime tests/runtime/test_runtime.c)
-target_link_libraries(test_runtime qvm_core)
-add_test(NAME runtime COMMAND test_runtime)
-
-add_executable(test_call_return tests/runtime/test_call_return.c)
-target_link_libraries(test_call_return qvm_core)
-add_test(NAME call_return COMMAND test_call_return)
-
-add_executable(test_loader tests/loader/test_loader.c)
-target_link_libraries(test_loader qvm_core)
-add_test(NAME loader COMMAND test_loader)
-
-add_executable(test_verifier tests/verifier/test_verifier.c)
-target_link_libraries(test_verifier qvm_core)
-add_test(NAME verifier COMMAND test_verifier)
-
-add_executable(demo examples/demo.c)
-target_link_libraries(demo qvm_core)
-
-add_executable(demo_ffi examples/demo_ffi.c)
-target_link_libraries(demo_ffi qvm_core)
-
-add_executable(demo_strings examples/demo_strings.c)
-target_link_libraries(demo_strings qvm_core)
-
-add_executable(demo_strings_native examples/demo_strings_native.c)
-target_link_libraries(demo_strings_native qvm_core)
-
-add_executable(benchmark examples/benchmark.c)
-target_link_libraries(benchmark qvm_core)
-
-
-add_executable(test_qms_zero tests/verifier/test_qms_zero.c src/verifier/verifier_qms.c)
-target_link_libraries(test_qms_zero qvm_core)
-add_test(NAME qms_zero COMMAND test_qms_zero)
-
-
-add_executable(test_qms_runtime tests/runtime/test_qms_runtime.c)
-target_link_libraries(test_qms_runtime qvm_core)
-add_test(NAME qms_runtime COMMAND test_qms_runtime)
-
-add_executable(benchmark_compare examples/benchmark_compare.c)
-target_link_libraries(benchmark_compare qvm_core)
-
-add_executable(debug_loop examples/debug_loop.c)
-target_link_libraries(debug_loop qvm_core)
-
-add_executable(test_qms_simple examples/test_qms_simple.c)
-target_link_libraries(test_qms_simple qvm_core)
-
-add_executable(test_decode_step examples/test_decode_step.c)
-target_link_libraries(test_decode_step qvm_core)
-target_sources(qvm_core PRIVATE src/runtime/runtime_fast.c)
-add_executable(benchmark_optimized examples/benchmark_optimized.c)
-target_link_libraries(benchmark_optimized qvm_core)
-add_executable(benchmark_native examples/benchmark_native.c)
-target_link_libraries(benchmark_native qvm_core)
-target_sources(qvm_core PRIVATE src/jit/jit.c)
-add_executable(benchmark_jit examples/benchmark_jit.c)
-target_link_libraries(benchmark_jit qvm_core)
-
-# QIT - QVM Inline Translation
-target_sources(qvm_core PRIVATE src/qit/qit.c)
-
-add_executable(test_qit tests/qit/test_qit.c)
-target_link_libraries(test_qit qvm_core)
-add_test(NAME qit COMMAND test_qit)
-
-add_executable(benchmark_qit examples/benchmark_qit.c)
-target_link_libraries(benchmark_qit qvm_core)
+# 3. Ejemplos y Demos
+set(QVM_EXAMPLES
+    examples/demo examples/demo_ffi examples/demo_strings examples/demo_strings_native
+    examples/benchmark examples/benchmark_compare examples/benchmark_optimized
+    examples/benchmark_native examples/benchmark_jit examples/benchmark_qit
+    examples/test_qms_simple examples/test_decode_step examples/debug_loop
+)
+foreach(example_target ${QVM_EXAMPLES})
+    get_filename_component(example_name ${example_target} NAME)
+    add_executable(${example_name} ${example_target}.c)
+    target_link_libraries(${example_name} PRIVATE qvm_core)
+endforeach()

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Versión" src="https://img.shields.io/badge/version-0.1.0--dev-blue.svg">
+  <img alt="Versión" src="https://img.shields.io/badge/version-0.2.0--baseline-blue.svg">
   <img alt="Lenguaje" src="https://img.shields.io/badge/language-C17-5C8DBC.svg">
   <img alt="Plataforma" src="https://img.shields.io/badge/platform-Linux%20x86--64-orange.svg">
   <img alt="Tests" src="https://img.shields.io/badge/tests-17%2F17%20passed-brightgreen.svg">
