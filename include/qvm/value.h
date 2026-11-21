@@ -49,6 +49,16 @@ uint32_t qvm_value_as_char(const qvm_value *v);
 int qvm_value_is_null_ref(const qvm_value *v);
 int qvm_value_is_null_ptr(const qvm_value *v);
 
+
+/* --- Blindaje de ABI (Fase 1, A1.6). No mover ni reordenar campos. --- */
+#ifndef __cplusplus
+#define QVM_ABI_VALUE_SIZE 16
+_Static_assert(sizeof(qvm_value) == 16, "ABI: qvm_value debe medir 16 bytes");
+_Static_assert(offsetof(qvm_value, payload) == 0, "ABI: payload debe estar en offset 0");
+_Static_assert(offsetof(qvm_value, type_id) == 8, "ABI: type_id debe estar en offset 8");
+_Static_assert(offsetof(qvm_value, flags) == 10, "ABI: flags debe estar en offset 10");
+#endif
+
 #ifdef __cplusplus
 }
 #endif

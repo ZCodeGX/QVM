@@ -60,3 +60,8 @@ uint32_t qvm_frame_function_index(const qvm_frame *f) { return f ? f->function_i
 const qvm_type_id_t *qvm_frame_register_types(const qvm_frame *f) { return f ? f->register_types : NULL; }
 qvm_value           *qvm_frame_registers      (qvm_frame *f)       { return f ? f->registers       : NULL; }
 const qvm_value     *qvm_frame_registers_const(const qvm_frame *f) { return f ? f->registers       : NULL; }
+/* QVM_ABI_FRAME_OFFSET: contrato con el prólogo de QIT (mov rdi,[rdi+24]). */
+#include <stddef.h>
+#define QVM_ABI_FRAME_OFFSET 1
+_Static_assert(offsetof(struct qvm_frame, registers) == 24,
+               "ABI QIT: el puntero de registros debe estar en offset 24");

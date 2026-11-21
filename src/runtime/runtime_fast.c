@@ -1,3 +1,9 @@
+/* QVM_ALLOW_COMPUTED_GOTO: extensión GNU deliberada (labels-as-values).
+   El fast path es opcional; el intérprete portable no depende de ella. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -155,3 +161,7 @@ qvm_error qvm_runtime_execute_fast(qvm_runtime *rt) {
     }
     #endif
 }
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
