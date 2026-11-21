@@ -94,7 +94,8 @@ static void emit_store_reg(codebuf_t *cb, uint8_t reg) {
 const qvm_compiled_code *qvm_qit_compile(qvm_qit *qit, 
                                           const qvm_module *module, 
                                           uint32_t function_index, 
-                                          qvm_error *err) {
+                                           qvm_error *err) {
+    (void)function_index;
     if (!qit || !module || !module->bytecode) {
         if (err) *err = QVM_ERR_INVALID_ARGUMENT;
         return NULL;

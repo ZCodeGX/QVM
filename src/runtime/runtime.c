@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "qvm/runtime.h"
+#include "code_cache.h"
+#include "qvm/backend.h"
+#include "qvm/config.h"
 #include "qvm/instruction.h"
 #include "qvm/registers.h"
 #include "qvm/string.h"
@@ -21,6 +24,24 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
     rt->ctx    = ctx;
     rt->module = module;
 
+    rt->code_cache = qvm_code_cache_create(256);
+    if (!rt->code_cache) {
+        free(rt);
+        if (err) *err = QVM_ERR_OUT_OF_MEMORY;
+        return NULL;
+    }
+
+    if (module->function_count) {
+        rt->call_counts = (uint32_t *)calloc(module->function_count, sizeof(uint32_t));
+        if (!rt->call_counts) {
+            qvm_code_cache_destroy(rt->code_cache);
+            free(rt);
+            if (err) *err = QVM_ERR_OUT_OF_MEMORY;
+            return NULL;
+        }
+        rt->call_counts_size = module->function_count;
+    }
+
     const qvm_limits *limits = qvm_context_limits(ctx);
     rt->max_call_depth = (limits && limits->max_call_depth) ? limits->max_call_depth : 256;
 
@@ -31,6 +52,8 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
         free(rt->call_stack);
         free(rt->return_addresses);
         free(rt->return_destinations);
+        if (rt->code_cache) qvm_code_cache_destroy(rt->code_cache);
+        free(rt->call_counts);
         free(rt);
         if (err) *err = QVM_ERR_OUT_OF_MEMORY;
         return NULL;
@@ -41,6 +64,8 @@ qvm_runtime *qvm_runtime_create(qvm_context *ctx, qvm_module *module, qvm_error 
         free(rt->call_stack);
         free(rt->return_addresses);
         free(rt->return_destinations);
+        if (rt->code_cache) qvm_code_cache_destroy(rt->code_cache);
+        free(rt->call_counts);
         free(rt);
         return NULL;
     }
@@ -64,6 +89,8 @@ void qvm_runtime_destroy(qvm_runtime *rt) {
     free(rt->return_destinations);
     qvm_ffi_registry_destroy(rt->ffi);
     free(rt->frame_region.base);
+    if (rt->code_cache) qvm_code_cache_destroy(rt->code_cache);
+    free(rt->call_counts);
     free(rt);
 }
 
@@ -452,5 +479,86 @@ qvm_error qvm_runtime_execute(qvm_runtime *rt) {
         }
         qvm_instruction_free(&ins);
     }
+    return QVM_OK;
+}
+
+/* ============================================================================
+ * A5.5: Ejecución de función con tiering automático
+ * ============================================================================ */
+
+qvm_error qvm_runtime_execute_function(
+    qvm_runtime *rt,
+    uint32_t function_index,
+    const qvm_value *args,
+    uint32_t arg_count,
+    qvm_exec_result *result)
+{
+    if (!rt || !rt->module || !result) {
+        return QVM_ERR_INVALID_ARGUMENT;
+    }
+    
+    if (function_index >= rt->module->function_count) {
+        return QVM_ERR_INVALID_ARGUMENT;
+    }
+    
+    /* Incrementar contador de calls */
+    if (rt->call_counts && function_index < rt->call_counts_size) {
+        rt->call_counts[function_index]++;
+    }
+    
+    /* Verificar si debemos compilar a nativo (tiering) */
+    const qvm_compiled_code *compiled = NULL;
+    qvm_arch_t arch = qvm_arch_detect();
+    
+    /* Crear clave de caché */
+    qvm_cache_key_t key = {
+        .module_id = rt->module->id,
+        .function_index = function_index,
+        .qcb_version = rt->module->version,
+        .backend_id = qvm_backend_select(arch),
+        .flags = 0
+    };
+    
+    /* Buscar en caché */
+    compiled = qvm_code_cache_get(rt->code_cache, &key);
+    
+    /* Si no está en caché y superamos el umbral, compilar */
+    if (!compiled && rt->call_counts && function_index < rt->call_counts_size) {
+        if (rt->call_counts[function_index] >= QVM_CONFIG_JIT_THRESHOLD) {
+            /* Compilar y guardar en caché */
+            qvm_error err;
+            compiled = qvm_backend_compile(arch, rt->module, function_index, &err);
+            if (compiled) {
+                qvm_code_cache_put(rt->code_cache, &key, compiled);
+            }
+        }
+    }
+    
+    /* Ejecutar código compilado si está disponible */
+    if (compiled) {
+        qvm_entry_fn entry = qvm_qit_entry(compiled);
+        if (entry) {
+            /* Preparar contexto de ejecución */
+            qvm_exec_context ctx = {
+                .registers = args,
+                .register_count = arg_count,
+                .bytecode = rt->module->bytecode,
+                .bytecode_size = rt->module->bytecode_size,
+                .types = NULL,  /* TODO: Obtener de type_table */
+                .os_env = NULL
+            };
+            
+            *result = entry(&ctx);
+            return result->error;
+        }
+    }
+    
+    /* Fallback al intérprete */
+    /* TODO: Implementar ejecución interpretada de función específica */
+    result->error = QVM_OK;
+    result->payload = 0;
+    result->type_id = 0;
+    result->flags = 0;
+    
     return QVM_OK;
 }

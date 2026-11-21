@@ -21,6 +21,8 @@ typedef struct qvm_function {
 } qvm_function;
 
 typedef struct qvm_module {
+    uint32_t          id;
+    uint32_t          version;
     const uint8_t    *bytecode;
     uint32_t          bytecode_size;
     const qvm_value  *constants;

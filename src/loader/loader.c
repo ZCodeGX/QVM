@@ -168,7 +168,8 @@ qvm_module *qvm_module_load_from_memory(const uint8_t *data, uint32_t size, qvm_
         return NULL;
     }
     memcpy(module->owned_data, data, size);
-    
+    module->version = version;
+
     for (uint32_t i = 0; i < section_count; ++i) {
         if (offset + 8 > size) {
             qvm_module_destroy(module);

@@ -57,9 +57,8 @@ const qvm_compiled_code *qvm_backend_interp_compile(
     }
     
     /* El "código" es en realidad un puntero a la función de entrada */
-    /* Usar memcpy para evitar -Wpedantic en conversión func->data */
-    void *func_ptr = (void *)interp_entry;
-    memcpy(&code->base.code, &func_ptr, sizeof(void *));
+    union { qvm_entry_fn fn; void *obj; } entry = { .fn = interp_entry };
+    code->base.code = entry.obj;
     code->base.size = 0;  /* No hay código máquina */
     code->base.capacity = 0;
     code->base.backend = "interp";

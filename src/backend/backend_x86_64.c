@@ -13,6 +13,7 @@ const qvm_compiled_code *qvm_backend_x86_64_compile(
     uint32_t function_index,
     qvm_error *err)
 {
+    (void)function_index;
     if (!module || !module->bytecode) {
         if (err) *err = QVM_ERR_INVALID_ARGUMENT;
         return NULL;

@@ -5,6 +5,9 @@
 
 #include "qvm/limits.h"
 
+#define QVM_CONFIG_JIT_THRESHOLD  10u
+#define QVM_CONFIG_MAX_CALL_DEPTH 1024u
+
 #ifdef __cplusplus
 extern "C" {
 #endif

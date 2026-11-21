@@ -25,19 +25,12 @@ qvm_error qvm_os_memory_protect(void *ptr, size_t size, qvm_os_prot_t prot);
 /* Libera la memoria reservada */
 qvm_error qvm_os_memory_release(void *ptr, size_t size);
 
-/* 
+/*
  * A3.4: Macro segura para conversión de puntero de datos a puntero de función.
- * Silencia -Wpedantic en GCC/Clang de forma localizada y segura.
+ * La unión evita el casteo directo, prohibido por ISO C con -Wpedantic.
  */
-#if defined(__GNUC__) || defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #define QVM_FUNC_FROM_PTR(ptr, type) ((type)(ptr))
-    #pragma GCC diagnostic pop
-#else
-    /* Fallback estándar para otros compiladores */
-    #define QVM_FUNC_FROM_PTR(ptr, type) ((type)(uintptr_t)(ptr))
-#endif
+#define QVM_FUNC_FROM_PTR(ptr, type) \
+    (((union { void *obj; type fn; }){ .obj = (ptr) }).fn)
 
 #ifdef __cplusplus
 }

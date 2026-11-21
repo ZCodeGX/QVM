@@ -11,12 +11,16 @@ add_library(qvm_core STATIC
     src/core/config.c src/core/context.c src/core/lifecycle.c src/core/type_table.c
     src/core/version.c src/frames/frames.c src/registers/registers.c
     src/instruction/instruction.c src/instruction/decode.c src/instruction/execute.c
-    src/memory/gcq/gcq.c src/runtime/runtime.c src/runtime/runtime_fast.c
+    src/memory/gcq/gcq.c src/runtime/runtime.c
+    src/runtime/code_cache.c src/runtime/runtime_fast.c
     src/loader/loader.c src/verifier/verifier.c src/verifier/verifier_qms.c
     src/string/string.c src/ffi/ffi.c src/jit/jit.c src/qit/qit.c
     src/qit/codebuf.c
     src/qit/reloc.c
     src/os/posix.c
+    src/backend/backend.c
+    src/backend/backend_interp.c
+    src/backend/backend_x86_64.c
 )
 target_include_directories(qvm_core PUBLIC include)
 target_compile_options(qvm_core PRIVATE -Wall -Wextra -Wpedantic)
@@ -31,6 +35,8 @@ set(QVM_TESTS
     tests/runtime/test_runtime tests/runtime/test_call_return tests/runtime/test_qms_runtime
     tests/loader/test_loader tests/verifier/test_verifier tests/verifier/test_qms_zero
     tests/qit/test_qit
+    tests/backend/test_backend
+    tests/runtime/test_tiering
 )
 foreach(test_target ${QVM_TESTS})
     get_filename_component(test_name ${test_target} NAME)
