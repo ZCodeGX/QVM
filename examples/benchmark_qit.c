@@ -85,7 +85,9 @@ static double benchmark_qit(void) {
     qvm_register_write(frame, 1, qvm_value_make(QVM_TYPE_I32, 1));
     qvm_register_write(frame, 2, qvm_value_make(QVM_TYPE_I32, 0));
 
-    qit_func_t func = (qit_func_t)qit_get_entry(code);
+    void *entry = qit_get_entry(code);
+    qit_func_t func;
+    memcpy(&func, &entry, sizeof func);
     
     printf("  Ejecutando código QIT...\n");
     struct timespec t0, t1;

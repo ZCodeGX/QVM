@@ -85,7 +85,8 @@ static double benchmark_jit(void) {
     qvm_register_write(frame, 1, qvm_value_make(QVM_TYPE_I32, 1));
     qvm_register_write(frame, 2, qvm_value_make(QVM_TYPE_I32, 0));
 
-    qvm_jit_func func = (qvm_jit_func)jit->code;
+    qvm_jit_func func;
+    memcpy(&func, &jit->code, sizeof func);
     
     printf("  Ejecutando código JIT...\n");
     struct timespec t0, t1;
