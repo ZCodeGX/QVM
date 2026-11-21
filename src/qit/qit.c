@@ -5,6 +5,7 @@
 #include "qvm/qit.h"
 #include "qvm/instruction.h"
 #include "qvm/value.h"
+#include "qvm/os.h"
 
 _Static_assert(sizeof(qvm_value) == 16, "ABI: qvm_value debe ser 16 bytes");
 
@@ -217,16 +218,15 @@ const qvm_compiled_code *qvm_qit_compile(qvm_qit *qit,
     // Asignar memoria ejecutable
     size_t code_size = codebuf_size(cb);
     size_t capacity = 4096;  // Alinear a página
-    void *exec_mem = mmap(NULL, capacity, PROT_READ | PROT_WRITE,
-                          MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (exec_mem == MAP_FAILED) {
+    void *exec_mem = NULL;
+    if (qvm_os_memory_reserve(&exec_mem, capacity) != QVM_OK) {
         goto fail;
     }
     
     memcpy(exec_mem, codebuf_data(cb), code_size);
     
-    if (mprotect(exec_mem, capacity, PROT_READ | PROT_EXEC) != 0) {
-        munmap(exec_mem, capacity);
+    if (qvm_os_memory_protect(exec_mem, capacity, QVM_OS_PROT_READ | QVM_OS_PROT_EXEC) != QVM_OK) {
+        qvm_os_memory_release(exec_mem, capacity);
         goto fail;
     }
     
@@ -245,7 +245,7 @@ const qvm_compiled_code *qvm_qit_compile(qvm_qit *qit,
     
     qvm_compiled_code *code = calloc(1, sizeof(qvm_compiled_code));
     if (!code) {
-        munmap(exec_mem, capacity);
+        qvm_os_memory_release(exec_mem, capacity);
         if (err) *err = QVM_ERR_OUT_OF_MEMORY;
         return NULL;
     }
@@ -266,7 +266,7 @@ fail:
 }
 
 qvm_entry_fn qvm_qit_entry(const qvm_compiled_code *code) {
-    return code ? (qvm_entry_fn)code->code : NULL;
+    return code ? QVM_FUNC_FROM_PTR(code->code, qvm_entry_fn) : NULL;
 }
 
 size_t qvm_qit_size(const qvm_compiled_code *code) {
@@ -280,7 +280,7 @@ const char *qvm_qit_backend(const qvm_compiled_code *code) {
 void qvm_qit_release(const qvm_compiled_code *code) {
     if (code) {
         if (code->code) {
-            munmap(code->code, code->capacity);
+            qvm_os_memory_release(code->code, code->capacity);
         }
         free((void *)code);
     }
@@ -343,7 +343,7 @@ qit_code *qit_compile(const uint8_t *bytecode, uint32_t size) {
 void qit_destroy(qit_code *code) {
     if (code) {
         if (code->code) {
-            munmap(code->code, code->capacity);
+            qvm_os_memory_release(code->code, code->capacity);
         }
         free(code);
     }

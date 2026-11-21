@@ -16,6 +16,7 @@ add_library(qvm_core STATIC
     src/string/string.c src/ffi/ffi.c src/jit/jit.c src/qit/qit.c
     src/qit/codebuf.c
     src/qit/reloc.c
+    src/os/posix.c
 )
 target_include_directories(qvm_core PUBLIC include)
 target_compile_options(qvm_core PRIVATE -Wall -Wextra -Wpedantic)
