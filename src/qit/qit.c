@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <sys/mman.h>
 #include "qvm/qit.h"
 #include "qvm/instruction.h"
+#include "qvm/value.h"
+
+/* BLINDAJE ABI FASE 1: Garantiza que el offset * 16 sea correcto */
+_Static_assert(sizeof(qvm_value) == 16, "ABI CRITICA: qvm_value debe ser exactamente 16 bytes para QIT");
 
 typedef struct {
     uint32_t patch_pos;
@@ -21,7 +26,6 @@ struct qit_code {
 };
 
 void qit_set_debug(int enabled) {
-    // Se aplicará por instancia en el futuro, por ahora placeholder seguro
     (void)enabled;
 }
 
@@ -75,7 +79,9 @@ static void compile_jmp_if(qit_code *qit, const uint8_t *insn) {
 }
 
 static void compile_return(qit_code *qit, const uint8_t *insn) {
-    uint8_t src = insn[1];
+    // CORRECCIÓN FASE 1: Alineado con el intérprete. El valor de retorno está en src1 (byte 4), no en dst (byte 1).
+    uint8_t src = insn[4];
+    (void)insn[1]; // dst se ignora en RETURN
     emit_load_reg(qit, src);
     emit_byte(qit, 0x5d); emit_byte(qit, 0xc3);
 }
@@ -101,10 +107,10 @@ qit_code *qit_compile(const uint8_t *bytecode, uint32_t size) {
         qit->offset_map[pc] = get_offset(qit);
         uint8_t op = bytecode[pc];
         switch (op) {
-            case 0x20: compile_arith_add(qit, bytecode + pc); pc += 6; break; // QVM_OP_ARITH_ADD
-            case 0x32: compile_cmp_lt(qit, bytecode + pc); pc += 6; break;    // QVM_OP_CMP_LT
-            case 0x02: compile_jmp_if(qit, bytecode + pc); pc += 9; break; // QVM_OP_JMP_IF
-            case 0x06: compile_return(qit, bytecode + pc); pc += 5; goto done; // QVM_OP_RETURN
+            case 0x20: compile_arith_add(qit, bytecode + pc); pc += 6; break;
+            case 0x32: compile_cmp_lt(qit, bytecode + pc); pc += 6; break;
+            case 0x02: compile_jmp_if(qit, bytecode + pc); pc += 9; break;
+            case 0x06: compile_return(qit, bytecode + pc); pc += 5; goto done;
             default: free(qit); munmap(code, capacity); return NULL;
         }
     }

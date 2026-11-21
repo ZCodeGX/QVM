@@ -4,6 +4,9 @@
 
 #include "qvm/frames.h"
 
+/* BLINDAJE ABI FASE 1 */
+_Static_assert(sizeof(qvm_value) == 16, "ABI CRITICA: qvm_value debe ser exactamente 16 bytes");
+
 struct qvm_frame {
     uint32_t           function_index;
     uint32_t           register_count;
